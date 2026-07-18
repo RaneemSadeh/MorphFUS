@@ -1,11 +1,8 @@
 # MorphFUS: The AI-driven acoustic shield that locks onto shifting tumors, dynamically re-shaping focused ultrasound to protect healthy tissue in real-time.
  
-<!--
-  DEMO GIF PLACEHOLDER
-  Drop your system/website demo GIF here, e.g.:
-  ![Demo of the adaptive closed-loop control system](docs/media/demo.gif)
--->
-![Demo GIF placeholder — add your system demo here](docs/media/demo.gif)
+<p align="center">
+ <img src="Demo.gif">
+</p>
  
 A minimal, runnable version of the core idea from the underlying research: **the
 tumor-tracking network and the ablation controller are not separate,
@@ -41,7 +38,9 @@ repo mirrors at prototype scale:
   Insert the paper's closed-loop architecture figure here, e.g.:
   ![Closed-loop architecture: imaging -> segmentation -> coordinate-to-dose mapping -> actuation -> monitoring](docs/media/architecture.png)
 -->
-![Architecture diagram placeholder](02.png)
+<p align="center">
+  <img src="02.png" alt="Architecture diagram" width="600">
+</p>
  
 1. **Real-time volumetric acquisition** — a live imaging stream (fast
    interleaved MRI, or ultrafast volumetric ultrasound via coherent
