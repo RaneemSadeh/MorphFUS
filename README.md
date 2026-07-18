@@ -131,4 +131,6 @@ python3 run_closed_loop_on_dataset.py --case-id Cage01_BL --max-slices 8 --slice
  
 The existing synthetic closed-loop demo remains unchanged, but these helpers demonstrate the first real-data integration path. Note that the paper's reference segmentation stack (3D U-Net / Swin-UNETR, trained on BraTS-style four-modality MRI) targets brain tumor segmentation; the uploaded pre-clinical ultrasound dataset used here is a different imaging modality and tumor type, so `train_ultrasound_segmentation.py` / `train_ultrasound_unet.py` should be read as validating the *control-loop integration path* against real volumetric ultrasound data, not as a drop-in BraTS-equivalent model.
 
-Programmed By: **Raneem Sa'deh🌚✨**
+<p align="center">
+ Programmed By: Raneem Sa'deh🌚✨
+</p>
