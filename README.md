@@ -41,7 +41,7 @@ repo mirrors at prototype scale:
   Insert the paper's closed-loop architecture figure here, e.g.:
   ![Closed-loop architecture: imaging -> segmentation -> coordinate-to-dose mapping -> actuation -> monitoring](docs/media/architecture.png)
 -->
-![Architecture diagram placeholder](docs/media/architecture.png)
+![Architecture diagram placeholder](02.png)
  
 1. **Real-time volumetric acquisition** — a live imaging stream (fast
    interleaved MRI, or ultrafast volumetric ultrasound via coherent
