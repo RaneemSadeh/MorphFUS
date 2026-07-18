@@ -1,0 +1,8 @@
+t_s,slice_index,case_id,label,found,measured_radius_mm,confidence,power_w,focal_radius_mm,reason
+0.0,0,Cage01_BL,progressive,True,24.886,0.063,2.0,24.386,low detection confidence (0.06) -> power reduced to minimum
+0.5,2,Cage01_BL,progressive,True,12.86,0.076,2.0,12.36,low detection confidence (0.08) -> power reduced to minimum
+1.0,4,Cage01_BL,progressive,True,13.135,0.081,2.0,12.635,low detection confidence (0.08) -> power reduced to minimum
+1.5,6,Cage01_BL,progressive,True,25.511,0.056,2.0,25.011,low detection confidence (0.06) -> power reduced to minimum
+2.0,8,Cage01_BL,progressive,True,10.128,0.126,2.0,9.628,low detection confidence (0.13) -> power reduced to minimum
+2.5,10,Cage01_BL,progressive,True,10.901,0.049,2.0,10.401,low detection confidence (0.05) -> power reduced to minimum
+3.0,12,Cage01_BL,progressive,True,6.897,0.112,2.0,6.397,low detection confidence (0.11) -> power reduced to minimum

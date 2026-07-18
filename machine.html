@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HIFU·AI — Treatment Console</title>
+<meta name="description" content="Real-time HIFU treatment console with 3D tumor detection and wave monitoring."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0C11;
+    --bg-soft:#0F131B;
+    --panel:#12161F;
+    --panel-border:rgba(255,255,255,0.07);
+    --glass:rgba(255,255,255,0.035);
+    --text:#EEF1F7;
+    --text-dim:#8A93A8;
+    --text-faint:#5B6478;
+    --blue:#4E8CFF;
+    --blue-dim:#2C4E8F;
+    --pink:#FF7BAC;
+    --red:#FF5A6E;
+    --green:#34D6A6;
+    --amber:#F59E0B;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    height:100%;font-family:'Inter',sans-serif;
+    color:var(--text);overflow-x:hidden;
+    background:
+      radial-gradient(ellipse 900px 600px at 60% 35%,rgba(255,123,172,0.08),transparent 60%),
+      radial-gradient(ellipse 700px 700px at 18% 8%,rgba(78,140,255,0.07),transparent 55%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+
+  /* ── TOP NAV ── */
+  .topnav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);background:rgba(10,12,17,0.75);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;flex-shrink:0;
+    background:conic-gradient(from 200deg,var(--blue),var(--pink),var(--blue));
+    position:relative;box-shadow:0 0 16px rgba(78,140,255,0.4);
+  }
+  .brand-mark::after{content:'';position:absolute;inset:5px;border-radius:4px;background:var(--bg);}
+  .brand-name{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:.2px;}
+  .brand-name span{color:var(--blue);}
+  .brand-model{font-size:11px;color:var(--text-faint);margin-left:2px;}
+
+  .session-bar{display:flex;align-items:center;gap:0;}
+  .sb-item{display:flex;flex-direction:column;align-items:center;padding:0 18px;gap:1px;}
+  .sb-label{font-size:9px;font-weight:600;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase;}
+  .sb-val{font-size:13px;font-weight:600;color:var(--text);}
+  .sb-val.timer{font-family:'IBM Plex Mono';color:var(--blue);}
+  .sb-div{width:1px;height:30px;background:var(--panel-border);}
+
+  .nav-actions{display:flex;align-items:center;gap:10px;}
+  .live-badge{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(52,214,166,0.1);border:1px solid rgba(52,214,166,0.25);
+    color:var(--green);padding:6px 14px;border-radius:999px;
+    font-size:11px;font-weight:600;animation:pill-blink 2s infinite;
+  }
+  @keyframes pill-blink{0%,100%{opacity:1;}50%{opacity:.7;}}
+  .live-dot2{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+  .btn-back{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--panel-border);
+    color:var(--text-dim);font-size:12px;font-weight:500;cursor:pointer;
+    transition:all .2s;
+  }
+  .btn-back:hover{background:rgba(255,255,255,.06);color:var(--text);}
+  .estop{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:999px;
+    background:rgba(255,90,110,0.12);border:1px solid rgba(255,90,110,0.3);
+    color:var(--red);font-size:11px;font-weight:700;cursor:pointer;
+    letter-spacing:.5px;transition:all .2s;
+  }
+  .estop:hover{background:rgba(255,90,110,0.22);}
+
+  /* ── MAIN LAYOUT ── */
+  .layout{
+    display:grid;
+    grid-template-columns:300px minmax(400px,1fr) 280px;
+    gap:20px;
+    padding:22px 24px 40px;
+    max-width:1680px;margin:0 auto;
+    min-height:calc(100vh - 58px);
+    align-items:start;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label{
+    display:flex;align-items:center;gap:8px;
+    font-size:11px;font-weight:600;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.09em;margin:0 0 12px;
+  }
+  .section-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue);}
+
+  /* ── CARDS ── */
+  .card{
+    background:linear-gradient(180deg,var(--glass),transparent),var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius-md);
+    padding:14px;
+  }
+
+  /* ── LEFT COLUMN ── */
+  .left-col{display:flex;flex-direction:column;gap:18px;}
+
+  /* Param tiles */
+  .tile-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+  .tile{
+    background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:var(--radius-sm);padding:12px;
+  }
+  .tile .val{font-family:'Space Grotesk';font-size:18px;font-weight:600;}
+  .tile .val.blue{color:var(--blue);}
+  .tile .val.pink{color:var(--pink);}
+  .tile .val.green{color:var(--green);}
+  .tile .val.amber{color:var(--amber);}
+  .tile .lbl{font-size:10px;color:var(--text-faint);margin-top:3px;}
+
+  /* Sliders */
+  .param-block{display:flex;flex-direction:column;gap:8px;}
+  .param-row2{display:flex;flex-direction:column;gap:4px;}
+  .param-row2 .pr-head{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);}
+  .param-row2 .pr-val{font-family:'IBM Plex Mono';color:var(--blue);font-size:11px;}
+  .slider{
+    -webkit-appearance:none;width:100%;height:3px;
+    background:rgba(78,140,255,0.12);border-radius:99px;outline:none;cursor:pointer;
+  }
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+    background:var(--blue);box-shadow:0 0 8px rgba(78,140,255,0.6);cursor:pointer;
+    transition:transform .15s;
+  }
+  .slider:hover::-webkit-slider-thumb{transform:scale(1.2);}
+
+  /* AI metrics */
+  .ai-block{display:flex;flex-direction:column;gap:8px;}
+  .ai-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+  .ai-glow{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:ai-blink 1.5s infinite;}
+  @keyframes ai-blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .ai-metric{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-faint);}
+  .ai-bar-wrap{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+  .ai-bar{height:100%;border-radius:99px;transition:width .8s ease;}
+  .ai-bar.blue{background:var(--blue);}
+  .ai-bar.green{background:var(--green);}
+  .ai-bar.amber{background:var(--amber);}
+  .ai-pct{font-family:'IBM Plex Mono';font-size:10px;color:var(--text-dim);min-width:30px;text-align:right;}
+
+  /* Session controls */
+  .ctrl-btns{display:flex;flex-direction:column;gap:6px;}
+  .ctrl-btn2{
+    width:100%;padding:9px 12px;border-radius:var(--radius-sm);
+    font-size:12px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;gap:8px;border:1px solid;
+    transition:all .2s;font-family:'Inter';
+  }
+  .ctrl-btn2.blue{background:rgba(78,140,255,.1);color:var(--blue);border-color:rgba(78,140,255,.2);}
+  .ctrl-btn2.blue:hover{background:rgba(78,140,255,.18);}
+  .ctrl-btn2.muted{background:rgba(255,255,255,.04);color:var(--text-dim);border-color:var(--panel-border);}
+  .ctrl-btn2.muted:hover{background:rgba(255,255,255,.07);}
+  .ctrl-btn2.danger2{background:rgba(255,90,110,.08);color:var(--red);border-color:rgba(255,90,110,.2);}
+  .ctrl-btn2.danger2:hover{background:rgba(255,90,110,.15);}
+
+  /* ── CENTER: 3D Stage ── */
+  .center-col{display:flex;flex-direction:column;gap:14px;}
+
+  .brain-stage{
+    position:relative;border-radius:var(--radius-lg);
+    background:radial-gradient(ellipse at 50% 42%,rgba(78,140,255,.10),transparent 65%);
+    border:1px solid var(--panel-border);
+    overflow:hidden;min-height:520px;cursor:grab;
+    display:flex;flex-direction:column;
+  }
+  .brain-stage.dragging{cursor:grabbing;}
+  .brain-stage canvas{display:block!important;width:100%!important;height:100%!important;flex:1;}
+
+  .stage-top{
+    position:absolute;top:14px;left:16px;right:16px;
+    display:flex;align-items:center;justify-content:space-between;z-index:10;pointer-events:none;
+  }
+  .top-tag2{
+    display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim);
+    background:rgba(10,12,17,.65);border:1px solid var(--panel-border);
+    padding:5px 12px;border-radius:20px;backdrop-filter:blur(8px);
+  }
+  .top-tag2 .live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 1.8s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .screen-num-badge{
+    font-family:'IBM Plex Mono';font-size:9px;color:var(--blue);
+    background:rgba(78,140,255,.12);border:1px solid rgba(78,140,255,.2);
+    padding:3px 8px;border-radius:4px;letter-spacing:1px;
+  }
+  .screen-tools2{display:flex;gap:6px;pointer-events:auto;}
+  .stool2{
+    width:26px;height:26px;border-radius:6px;
+    background:rgba(255,255,255,.04);border:1px solid var(--panel-border);
+    font-size:12px;color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:all .18s;
+  }
+  .stool2:hover{background:rgba(78,140,255,.12);color:var(--blue);}
+  .fps-badge{font-family:'IBM Plex Mono';font-size:9px;color:var(--green);opacity:.8;display:flex;align-items:center;}
+
+  /* HUD */
+  .hud{position:absolute;inset:0;pointer-events:none;font-family:'IBM Plex Mono';z-index:5;}
+  .hud-corner{position:absolute;display:flex;flex-direction:column;gap:3px;padding:8px;}
+  .hud-corner.tl{top:46px;left:0;}
+  .hud-corner.tr{top:46px;right:0;align-items:flex-end;}
+  .hud-corner.bl{bottom:52px;left:0;}
+  .hud-corner.br{bottom:52px;right:0;align-items:flex-end;}
+  .hud-line{
+    font-size:10px;color:rgba(78,140,255,.75);
+    background:rgba(0,0,0,.5);padding:2px 6px;border-radius:3px;display:inline-flex;gap:4px;
+  }
+  .hud-line strong{color:var(--blue);}
+  .hl-green strong{color:var(--green)!important;}
+  .hl-scan{color:var(--green)!important;animation:scan-blink .9s step-end infinite;}
+  @keyframes scan-blink{50%{opacity:0;}}
+
+  /* Crosshair */
+  .crosshair{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:70px;height:70px;pointer-events:none;z-index:8;
+  }
+  .ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,90,110,.5);transform:translateY(-50%);}
+  .ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,90,110,.5);transform:translateX(-50%);}
+  .ch-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,90,110,.35);top:50%;left:50%;transform:translate(-50%,-50%);}
+
+  /* Stage footer */
+  .stage-footer{
+    display:flex;align-items:center;gap:14px;
+    padding:8px 14px;background:rgba(0,0,0,.5);
+    border-top:1px solid var(--panel-border);
+    font-family:'IBM Plex Mono';font-size:10px;color:var(--text-faint);
+    flex-shrink:0;
+  }
+  .sf2-item{display:flex;gap:4px;}
+  .sf2-item span{color:var(--blue);}
+  .sf2-sep{flex:1;}
+
+  /* Hotspot dots */
+  .hotspot-dot2{
+    position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;
+    border-radius:50%;cursor:pointer;pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .25s;
+  }
+  .hotspot-dot2::before{
+    content:'';position:absolute;inset:0;border-radius:50%;
+    background:rgba(255,123,172,.15);border:1px solid rgba(255,123,172,.5);
+    animation:ping2 2.4s ease-out infinite;
+  }
+  .hotspot-dot2::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px 2px rgba(255,255,255,.7);position:relative;z-index:1;}
+  @keyframes ping2{0%{transform:scale(.6);opacity:.9;}80%{transform:scale(1.9);opacity:0;}100%{opacity:0;}}
+
+  /* Region panel */
+  .region-panel2{
+    position:absolute;left:14px;bottom:50px;max-width:260px;
+    background:rgba(10,12,17,.85);backdrop-filter:blur(10px);
+    border:1px solid var(--panel-border);border-radius:var(--radius-md);
+    padding:12px 14px;z-index:10;
+  }
+  .rp-label{font-size:9.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;}
+  .rp-name{font-family:'Space Grotesk';font-size:15px;font-weight:600;margin-bottom:4px;}
+  .rp-value{font-family:'IBM Plex Mono';font-size:12px;color:var(--pink);margin-bottom:4px;}
+  .rp-desc{font-size:11px;color:var(--text-dim);line-height:1.4;}
+
+  /* Wave Screen */
+  .wave-screen{
+    background:linear-gradient(180deg,var(--glass),transparent),var(--panel);
+    border:1px solid var(--panel-border);border-radius:var(--radius-lg);
+    overflow:hidden;
+  }
+  .wave-screen-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;border-bottom:1px solid var(--panel-border);
+  }
+  .wave-screen-label{display:flex;align-items:center;gap:8px;}
+  .ws-title{font-size:10px;color:var(--text-faint);font-family:'IBM Plex Mono';letter-spacing:1.2px;text-transform:uppercase;}
+  .wave-legend{display:flex;gap:12px;}
+  .wleg{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text-faint);font-family:'IBM Plex Mono';}
+  .wleg-line{width:18px;height:2px;border-radius:99px;}
+  .wave-viewport{position:relative;height:160px;}
+  .wave-viewport canvas{width:100%;height:100%;}
+  .wave-scale-y{
+    position:absolute;left:8px;top:0;bottom:0;
+    display:flex;flex-direction:column;justify-content:space-between;padding:8px 0;
+    font-family:'IBM Plex Mono';font-size:9px;color:rgba(78,140,255,.4);pointer-events:none;
+  }
+  .wave-footer2{
+    display:flex;border-top:1px solid var(--panel-border);
+  }
+  .wf2-metric{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:8px 6px;border-right:1px solid var(--panel-border);
+  }
+  .wf2-metric:last-child{border-right:none;}
+  .wf2-label{font-size:8px;color:var(--text-faint);font-family:'IBM Plex Mono';letter-spacing:.5px;text-transform:uppercase;}
+  .wf2-val{font-size:12px;font-weight:600;color:var(--blue);font-family:'IBM Plex Mono';}
+
+  /* Progress */
+  .progress-card{
+    background:linear-gradient(180deg,var(--glass),transparent),var(--panel);
+    border:1px solid var(--panel-border);border-radius:var(--radius-md);padding:14px;
+  }
+  .prog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .prog-title{font-size:11px;color:var(--text-dim);font-weight:600;}
+  .prog-pct2{font-family:'IBM Plex Mono';font-size:13px;font-weight:600;color:var(--blue);}
+  .prog-bar-wrap2{height:8px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;margin-bottom:12px;}
+  .prog-bar-fill2{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue-dim),var(--blue));box-shadow:0 0 10px rgba(78,140,255,.4);transition:width .5s;}
+  .energy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .eg-item{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius-sm);padding:10px 8px;text-align:center;}
+  .eg-label{font-size:8px;color:var(--text-faint);font-family:'IBM Plex Mono';text-transform:uppercase;margin-bottom:4px;}
+  .eg-val{font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:var(--text);}
+
+  /* ── RIGHT COLUMN ── */
+  .right-col{display:flex;flex-direction:column;gap:18px;}
+
+  /* Patient card */
+  .patient-card{padding:16px;}
+  .pt-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .pt-avatar{
+    width:42px;height:42px;border-radius:12px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--pink),var(--blue));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-weight:600;font-size:14px;color:#0A0C11;
+  }
+  .pt-name{font-weight:600;font-size:14px;}
+  .pt-sub{font-size:11px;color:var(--text-faint);margin-top:1px;}
+  .pt-field{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 11px;background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:var(--radius-sm);margin-bottom:6px;font-size:12px;
+  }
+  .pt-field .lbl{color:var(--text-faint);}
+  .pt-field .val2{font-family:'IBM Plex Mono';color:var(--text);font-size:11px;}
+
+  /* RT vitals */
+  .rt-vital{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 10px;background:rgba(255,255,255,.02);
+    border-radius:var(--radius-sm);border:1px solid var(--panel-border);
+    margin-bottom:6px;transition:all .2s;
+  }
+  .rt-vital:hover{background:rgba(255,255,255,.04);}
+  .rtv-icon{font-size:16px;flex-shrink:0;}
+  .rtv-info{flex:1;display:flex;flex-direction:column;gap:1px;}
+  .rtv-lbl{font-size:9px;color:var(--text-faint);}
+  .rtv-val2{font-size:15px;font-weight:700;font-family:'IBM Plex Mono';color:var(--text);}
+  .rtv-unit{font-size:9px;color:var(--text-faint);}
+
+  /* Tumor response */
+  .tumor-resp-wrap{background:rgba(0,0,0,.3);border-radius:var(--radius-sm);border:1px solid var(--panel-border);overflow:hidden;height:80px;}
+  .tumor-resp-wrap canvas{width:100%;height:100%;}
+  .trs-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+  .trs-item{display:flex;flex-direction:column;gap:2px;}
+  .trs-lbl{font-size:9px;color:var(--text-faint);}
+  .trs-val{font-size:12px;font-weight:700;font-family:'IBM Plex Mono';color:var(--text);}
+
+  /* Log */
+  .session-log{max-height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+  .log-entry2{
+    display:flex;gap:7px;align-items:flex-start;
+    padding:5px 8px;border-radius:6px;
+    background:rgba(255,255,255,.02);border:1px solid var(--panel-border);
+    font-size:10px;
+  }
+  .log-time2{font-family:'IBM Plex Mono';color:var(--blue);flex-shrink:0;font-size:9px;}
+  .log-msg2{color:var(--text-dim);line-height:1.4;}
+  .log-entry2.warn2{border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.04);}
+  .log-entry2.good{border-color:rgba(52,214,166,.2);background:rgba(52,214,166,.04);}
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,.8);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .result-modal{
+    background:#0a1220;border:1px solid var(--panel-border);
+    border-radius:22px;padding:30px;max-width:480px;width:90%;
+    box-shadow:0 0 60px rgba(78,140,255,.2);
+    animation:modal-in .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes modal-in{from{opacity:0;transform:scale(.85)translateY(20px);}to{opacity:1;transform:scale(1)translateY(0);}}
+  .rm-head{text-align:center;margin-bottom:22px;display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .rm-head h2{font-family:'Space Grotesk';font-size:22px;font-weight:700;color:var(--text);}
+  .rm-head p{font-size:13px;color:var(--text-dim);}
+  .rm-body{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+  .rm-stat{
+    display:flex;justify-content:space-between;padding:9px 13px;
+    background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--panel-border);font-size:12px;
+  }
+  .rm-stat span{color:var(--text-dim);}
+  .rm-stat strong{color:var(--text);font-family:'IBM Plex Mono';}
+  .rm-actions{display:flex;gap:10px;}
+  .btn-rm-primary{
+    flex:1;padding:12px;border-radius:11px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--blue-dim),var(--blue));color:#fff;
+    font-weight:600;font-size:13px;font-family:'Inter';transition:filter .15s;
+  }
+  .btn-rm-primary:hover{filter:brightness(1.1);}
+  .btn-rm-secondary{
+    flex:1;padding:12px;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.05);color:var(--text-dim);font-size:13px;
+    border:1px solid var(--panel-border);font-family:'Inter';font-weight:500;transition:all .15s;
+  }
+  .btn-rm-secondary:hover{background:rgba(255,255,255,.08);}
+
+  /* Hotspot layer */
+  #hotspotLayer{position:absolute;inset:0;pointer-events:none;z-index:9;}
+
+  /* Stage drag hint */
+  .stage-hint2{
+    position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+    font-size:10px;color:var(--text-faint);letter-spacing:.03em;pointer-events:none;
+    display:flex;gap:14px;opacity:.7;z-index:10;
+  }
+  .stage-hint2 b{color:var(--text-dim);font-weight:500;}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-name">HIFU<span>·AI</span> <span class="brand-model">UltraWave Pro X9</span></div>
+  </div>
+  <div class="session-bar">
+    <div class="sb-item"><div class="sb-label">Patient</div><div class="sb-val" id="mhPatient">—</div></div>
+    <div class="sb-div"></div>
+    <div class="sb-item"><div class="sb-label">ID</div><div class="sb-val" id="mhId">—</div></div>
+    <div class="sb-div"></div>
+    <div class="sb-item"><div class="sb-label">Physician</div><div class="sb-val" id="mhDoc">—</div></div>
+    <div class="sb-div"></div>
+    <div class="sb-item"><div class="sb-label">Session</div><div class="sb-val timer" id="sessionTimer">00:00:00</div></div>
+  </div>
+  <div class="nav-actions">
+    <div class="live-badge"><span class="live-dot2"></span>LIVE TREATMENT</div>
+    <button class="btn-back" onclick="window.location.href='index.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </button>
+    <button class="estop" onclick="emergencyStop()">■ E-STOP</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT: Controls -->
+  <div class="left-col">
+
+    <!-- Live metrics tiles -->
+    <div>
+      <div class="section-label">Live Metrics</div>
+      <div class="tile-row">
+        <div class="tile"><div class="val blue" id="tlFreq">1.1 MHz</div><div class="lbl">Frequency</div></div>
+        <div class="tile"><div class="val pink" id="tlInten">1500 W</div><div class="lbl">Intensity</div></div>
+        <div class="tile"><div class="val green" id="tlTemp">37.0°C</div><div class="lbl">Tissue Temp</div></div>
+        <div class="tile"><div class="val amber" id="tlCov">0%</div><div class="lbl">Coverage</div></div>
+      </div>
+    </div>
+
+    <!-- Wave parameters -->
+    <div class="card">
+      <div class="section-label">Wave Parameters</div>
+      <div class="param-block">
+        <div class="param-row2">
+          <div class="pr-head"><span>Frequency</span><span class="pr-val" id="valFreq">1.1 MHz</span></div>
+          <input type="range" class="slider" id="slFreq" min="0.5" max="5" step="0.1" value="1.1" oninput="updateParams()">
+        </div>
+        <div class="param-row2">
+          <div class="pr-head"><span>Intensity</span><span class="pr-val" id="valInten">1500 W/cm²</span></div>
+          <input type="range" class="slider" id="slInten" min="100" max="3000" step="50" value="1500" oninput="updateParams()">
+        </div>
+        <div class="param-row2">
+          <div class="pr-head"><span>Duty Cycle</span><span class="pr-val" id="valDuty">80%</span></div>
+          <input type="range" class="slider" id="slDuty" min="10" max="100" step="5" value="80" oninput="updateParams()">
+        </div>
+        <div class="param-row2">
+          <div class="pr-head"><span>Focus Depth</span><span class="pr-val" id="valDepth">45 mm</span></div>
+          <input type="range" class="slider" id="slDepth" min="10" max="200" step="1" value="45" oninput="updateParams()">
+        </div>
+        <div class="param-row2">
+          <div class="pr-head"><span>Beam Angle</span><span class="pr-val" id="valAngle">0°</span></div>
+          <input type="range" class="slider" id="slAngle" min="-45" max="45" step="1" value="0" oninput="updateParams()">
+        </div>
+      </div>
+    </div>
+
+    <!-- AI optimization -->
+    <div class="card">
+      <div class="section-label">AI Optimization</div>
+      <div class="ai-block">
+        <div class="ai-status"><span class="ai-glow"></span>Auto-tuning Active</div>
+        <div class="ai-metric">
+          <span style="min-width:110px">Targeting Accuracy</span>
+          <div class="ai-bar-wrap"><div class="ai-bar blue" id="aiAccBar" style="width:94%"></div></div>
+          <span class="ai-pct" id="aiAcc">94%</span>
+        </div>
+        <div class="ai-metric">
+          <span style="min-width:110px">Tissue Safety</span>
+          <div class="ai-bar-wrap"><div class="ai-bar green" id="aiSafeBar" style="width:98%"></div></div>
+          <span class="ai-pct" id="aiSafe">98%</span>
+        </div>
+        <div class="ai-metric">
+          <span style="min-width:110px">Treatment Coverage</span>
+          <div class="ai-bar-wrap"><div class="ai-bar amber" id="aiCovBar" style="width:0%"></div></div>
+          <span class="ai-pct" id="aiCov2">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="section-label">Session Controls</div>
+      <div class="ctrl-btns">
+        <button class="ctrl-btn2 blue" id="btnPause" onclick="togglePause()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pause Treatment
+        </button>
+        <button class="ctrl-btn2 muted" onclick="captureSnapshot()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Capture Snapshot
+        </button>
+        <button class="ctrl-btn2 danger2" onclick="endSession()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          End &amp; Save Session
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTER: 3D Stage + Wave -->
+  <div class="center-col">
+
+    <!-- 3D Tumor Stage -->
+    <div class="brain-stage" id="brainStage">
+      <div class="stage-top">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="screen-num-badge">SCR 01</span>
+          <div class="top-tag2"><span class="live"></span>3D TUMOR DETECTION · REAL TIME</div>
+        </div>
+        <div class="screen-tools2">
+          <button class="stool2" onclick="toggleGrid()" title="Grid">⊞</button>
+          <button class="stool2" onclick="resetCam()" title="Reset">↺</button>
+          <span class="fps-badge" id="fpsBadge">60 FPS</span>
+        </div>
+      </div>
+
+      <div id="hotspotLayer"></div>
+
+      <div class="hud">
+        <div class="hud-corner tl">
+          <div class="hud-line">DEPTH: <strong id="hudDepth">45mm</strong></div>
+          <div class="hud-line">FREQ: <strong id="hudFreq">1.1 MHz</strong></div>
+        </div>
+        <div class="hud-corner tr">
+          <div class="hud-line">TUMOR Ø: <strong id="hudSize">24mm</strong></div>
+          <div class="hud-line">TEMP: <strong id="hudTemp">37.0°C</strong></div>
+        </div>
+        <div class="hud-corner bl">
+          <div class="hud-line hl-scan">▶ SCANNING</div>
+        </div>
+        <div class="hud-corner br">
+          <div class="hud-line hl-green">AI LOCK: <strong>ACQUIRED</strong></div>
+        </div>
+      </div>
+
+      <div class="crosshair">
+        <div class="ch-h"></div><div class="ch-v"></div>
+        <div class="ch-ring" style="width:30px;height:30px;animation:ring-pulse 2s infinite;"></div>
+        <div class="ch-ring" style="width:56px;height:56px;animation:ring-pulse 2s infinite .5s;"></div>
+      </div>
+      <style>@keyframes ring-pulse{0%,100%{opacity:.6;}50%{opacity:.15;}}</style>
+
+      <div class="region-panel2" id="regionPanel">
+        <div class="rp-label">Region Insight</div>
+        <div class="rp-name" id="rpName">Select a marker</div>
+        <div class="rp-value" id="rpValue">—</div>
+        <div class="rp-desc" id="rpDesc">Click any glowing node to inspect real-time activity.</div>
+      </div>
+
+      <div class="stage-hint2"><span><b>Drag</b> rotate</span><span><b>Scroll</b> zoom</span><span><b>Click</b> a node</span></div>
+      <div class="stage-footer">
+        <div class="sf2-item">X: <span id="sf3dX">—</span> cm</div>
+        <div class="sf2-item">Y: <span id="sf3dY">—</span> cm</div>
+        <div class="sf2-item">Z: <span id="sf3dZ">—</span> cm</div>
+        <div class="sf2-item">VOL: <span id="sf3dVol">—</span> cm³</div>
+        <div class="sf2-sep"></div>
+        <div class="sf2-item" style="color:var(--green)">AI LOCK ✓</div>
+      </div>
+    </div>
+
+    <!-- Wave Monitor -->
+    <div class="wave-screen">
+      <div class="wave-screen-head">
+        <div class="wave-screen-label">
+          <span class="screen-num-badge">SCR 02</span>
+          <span class="ws-title">WAVE TUNING · SONODYNAMIC MONITOR</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="wave-legend">
+            <div class="wleg"><div class="wleg-line" style="background:#4E8CFF"></div>HIFU</div>
+            <div class="wleg"><div class="wleg-line" style="background:#FF7BAC"></div>SDT</div>
+            <div class="wleg"><div class="wleg-line" style="background:#34D6A6"></div>REF</div>
+          </div>
+          <button class="stool2" id="waveModeBtn" onclick="toggleWaveMode()" style="width:auto;padding:0 10px;font-size:10px;">LIVE</button>
+        </div>
+      </div>
+      <div class="wave-viewport">
+        <canvas id="waveCanvas"></canvas>
+        <div class="wave-scale-y"><span>+3</span><span>0</span><span>-3</span></div>
+      </div>
+      <div class="wave-footer2">
+        <div class="wf2-metric"><div class="wf2-label">AMPLITUDE</div><div class="wf2-val" id="wfAmp">2.8 MPa</div></div>
+        <div class="wf2-metric"><div class="wf2-label">FREQUENCY</div><div class="wf2-val" id="wfFreq">1.10 MHz</div></div>
+        <div class="wf2-metric"><div class="wf2-label">PERIOD</div><div class="wf2-val" id="wfPeriod">909 ns</div></div>
+        <div class="wf2-metric"><div class="wf2-label">POWER OUT</div><div class="wf2-val" id="wfPower">1500 W</div></div>
+        <div class="wf2-metric"><div class="wf2-label">SNR</div><div class="wf2-val" style="color:var(--green)" id="wfSNR">42 dB</div></div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-card">
+      <div class="prog-head">
+        <span class="prog-title">Treatment Progress</span>
+        <span class="prog-pct2" id="progressPct">0%</span>
+      </div>
+      <div class="prog-bar-wrap2"><div class="prog-bar-fill2" id="progressFill" style="width:0%"></div></div>
+      <div class="energy-grid">
+        <div class="eg-item"><div class="eg-label">Energy Del.</div><div class="eg-val" id="energyDel">0 kJ</div></div>
+        <div class="eg-item"><div class="eg-label">Target</div><div class="eg-val">67.5 kJ</div></div>
+        <div class="eg-item"><div class="eg-label">Tissue Temp</div><div class="eg-val" id="tissueTemp2">37.0°C</div></div>
+        <div class="eg-item"><div class="eg-label">Ablation</div><div class="eg-val" id="ablation2">0 mm³</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Patient + Vitals + Log -->
+  <div class="right-col">
+
+    <!-- Patient card -->
+    <div>
+      <div class="section-label">Patient</div>
+      <div class="card patient-card">
+        <div class="pt-top">
+          <div class="pt-avatar" id="ptAvatar">—</div>
+          <div>
+            <div class="pt-name" id="ptName">—</div>
+            <div class="pt-sub" id="ptSub">—</div>
+          </div>
+        </div>
+        <div class="pt-field"><span class="lbl">Tumor Type</span><span class="val2" id="ptType">—</span></div>
+        <div class="pt-field"><span class="lbl">Frequency</span><span class="val2" id="ptFreq">—</span></div>
+        <div class="pt-field"><span class="lbl">Duration</span><span class="val2" id="ptDur">—</span></div>
+      </div>
+    </div>
+
+    <!-- Real-time vitals -->
+    <div>
+      <div class="section-label">Real-Time Vitals</div>
+      <div class="rt-vital">
+        <span class="rtv-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+        <div class="rtv-info"><span class="rtv-lbl">Heart Rate</span><span class="rtv-val2" id="rtHR">72</span></div><span class="rtv-unit">bpm</span>
+      </div>
+      <div class="rt-vital">
+        <span class="rtv-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <div class="rtv-info"><span class="rtv-lbl">Blood Pressure</span><span class="rtv-val2" id="rtBP">120/80</span></div><span class="rtv-unit">mmHg</span>
+      </div>
+      <div class="rt-vital">
+        <span class="rtv-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M20 10a8 8 0 1 0-16 0v10"/><path d="M6 18h12"/></svg></span>
+        <div class="rtv-info"><span class="rtv-lbl">SpO₂</span><span class="rtv-val2" id="rtO2">98</span></div><span class="rtv-unit">%</span>
+      </div>
+      <div class="rt-vital">
+        <span class="rtv-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
+        <div class="rtv-info"><span class="rtv-lbl">Core Temp</span><span class="rtv-val2" id="rtTemp">36.6</span></div><span class="rtv-unit">°C</span>
+      </div>
+    </div>
+
+    <!-- Tumor response -->
+    <div class="card">
+      <div class="section-label">Tumor Response</div>
+      <div class="tumor-resp-wrap"><canvas id="tumorRespCanvas"></canvas></div>
+      <div class="trs-row">
+        <div class="trs-item"><div class="trs-lbl">Initial Ø</div><div class="trs-val" id="trsInit">24.0 mm</div></div>
+        <div class="trs-item"><div class="trs-lbl">Current Ø</div><div class="trs-val" id="trsCurrent">24.0 mm</div></div>
+        <div class="trs-item"><div class="trs-lbl">Reduction</div><div class="trs-val" style="color:var(--green)" id="trsReduc">0.0%</div></div>
+      </div>
+    </div>
+
+    <!-- Session log -->
+    <div class="card">
+      <div class="section-label">Session Log</div>
+      <div class="session-log" id="sessionLog">
+        <div class="log-entry2"><span class="log-time2">00:00:00</span><span class="log-msg2">Session initialized. AI targeting acquired.</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-overlay" id="resultModal" style="display:none">
+  <div class="result-modal">
+    <div class="rm-head">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h2>Session Complete</h2>
+      <p>Treatment session ended successfully</p>
+    </div>
+    <div class="rm-body" id="rmBody"></div>
+    <div class="rm-actions">
+      <button class="btn-rm-primary" onclick="saveReport()">Download Report</button>
+      <button class="btn-rm-secondary" onclick="window.location.href='index.html'">New Session</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ── Session data ── */
+let S = { name:'Michael Robertson',id:'PT-2024-0011',doc:'Dr. Ahmed Hassan',type:'Hepatocellular Carcinoma',size:24,depth:45,freq:1.1,inten:1500,duty:80,dur:45,x:-2.3,y:1.5,z:4.5 };
+try {
+  const d=JSON.parse(localStorage.getItem('hifuSession')||'{}');
+  if(d.name){ S.name=d.name; S.id=d.id||S.id; S.doc=d.doc||S.doc; S.type=d.type||S.type;
+    S.size=+d.size||S.size; S.depth=+d.depth||S.depth; S.freq=+d.freq||S.freq;
+    S.inten=+d.inten||S.inten; S.duty=+d.duty||S.duty; S.dur=+d.dur||S.dur;
+    S.x=+d.x||S.x; S.y=+d.y||S.y; S.z=+d.z||S.z; }
+} catch(e){}
+
+/* ── Fill UI ── */
+document.getElementById('mhPatient').textContent=S.name;
+document.getElementById('mhId').textContent=S.id;
+document.getElementById('mhDoc').textContent=S.doc;
+document.getElementById('ptAvatar').textContent=S.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+document.getElementById('ptName').textContent=S.name;
+document.getElementById('ptSub').textContent='ID · '+S.id;
+document.getElementById('ptType').textContent=S.type.split(' ').slice(0,2).join(' ');
+document.getElementById('ptFreq').textContent=S.freq+' MHz';
+document.getElementById('ptDur').textContent=S.dur+' min';
+document.getElementById('trsInit').textContent=S.size.toFixed(1)+' mm';
+document.getElementById('sf3dX').textContent=S.x;
+document.getElementById('sf3dY').textContent=S.y;
+document.getElementById('sf3dZ').textContent=(S.depth/10).toFixed(1);
+document.getElementById('sf3dVol').textContent=(4/3*Math.PI*Math.pow(S.size/20,3)).toFixed(2);
+
+/* ── Sliders ── */
+document.getElementById('slFreq').value=S.freq;
+document.getElementById('slInten').value=S.inten;
+document.getElementById('slDuty').value=S.duty;
+document.getElementById('slDepth').value=S.depth;
+
+let P={freq:S.freq,inten:S.inten,duty:S.duty,depth:S.depth,angle:0};
+function updateParams(){
+  P.freq=+document.getElementById('slFreq').value;
+  P.inten=+document.getElementById('slInten').value;
+  P.duty=+document.getElementById('slDuty').value;
+  P.depth=+document.getElementById('slDepth').value;
+  P.angle=+document.getElementById('slAngle').value;
+  document.getElementById('valFreq').textContent=P.freq.toFixed(1)+' MHz';
+  document.getElementById('valInten').textContent=P.inten+' W/cm²';
+  document.getElementById('valDuty').textContent=P.duty+'%';
+  document.getElementById('valDepth').textContent=P.depth+' mm';
+  document.getElementById('valAngle').textContent=P.angle+'°';
+  document.getElementById('tlFreq').textContent=P.freq.toFixed(1)+' MHz';
+  document.getElementById('tlInten').textContent=P.inten+' W';
+  document.getElementById('hudFreq').textContent=P.freq.toFixed(1)+' MHz';
+  document.getElementById('hudDepth').textContent=P.depth+'mm';
+  document.getElementById('wfFreq').textContent=P.freq.toFixed(2)+' MHz';
+  document.getElementById('wfPeriod').textContent=Math.round(1000/P.freq)+' ns';
+  document.getElementById('wfPower').textContent=P.inten+' W';
+  addLog('info','Params: Freq '+P.freq+'MHz · Int '+P.inten+'W');
+}
+updateParams();
+
+/* ── Session timer ── */
+let elapsed=0,lastTick=Date.now(),paused=false,active=true;
+let curSize=S.size,energyDel=0,tissueTemp=37,logCount=0;
+
+setInterval(()=>{
+  if(!active||paused) return;
+  const now=Date.now(); elapsed+=now-lastTick; lastTick=now;
+  const secs=Math.floor(elapsed/1000);
+  const h=String(Math.floor(secs/3600)).padStart(2,'0');
+  const m=String(Math.floor((secs%3600)/60)).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.getElementById('sessionTimer').textContent=`${h}:${m}:${s}`;
+  const durSec=S.dur*60;
+  const pct=Math.min((elapsed/1000)/durSec*100,100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=Math.floor(pct)+'%';
+  const power=P.inten*(P.duty/100); energyDel+=power*0.0001;
+  document.getElementById('energyDel').textContent=(energyDel/1000).toFixed(2)+' kJ';
+  tissueTemp=37+(pct/100)*30*(P.inten/1500)+(Math.random()-.5)*.15;
+  document.getElementById('tissueTemp2').textContent=tissueTemp.toFixed(1)+'°C';
+  document.getElementById('tlTemp').textContent=tissueTemp.toFixed(1)+'°C';
+  document.getElementById('hudTemp').textContent=tissueTemp.toFixed(1)+'°C';
+  const shrink=(P.inten/15000)*(P.duty/100)*0.00015;
+  curSize=Math.max(S.size*.3,curSize-shrink);
+  const reduc=((S.size-curSize)/S.size*100);
+  document.getElementById('trsCurrent').textContent=curSize.toFixed(1)+' mm';
+  document.getElementById('trsReduc').textContent=reduc.toFixed(1)+'%';
+  document.getElementById('hudSize').textContent=curSize.toFixed(0)+'mm';
+  document.getElementById('ablation2').textContent=Math.floor(reduc*.8*S.size)+' mm³';
+  const cov=Math.min(99,40+pct*.6);
+  document.getElementById('tlCov').textContent=Math.floor(cov)+'%';
+  document.getElementById('aiAccBar').style.width=Math.min(99,90+reduc*.3)+'%';
+  document.getElementById('aiSafeBar').style.width=Math.max(85,98-reduc*.05)+'%';
+  document.getElementById('aiCovBar').style.width=cov+'%';
+  document.getElementById('aiAcc').textContent=Math.floor(Math.min(99,90+reduc*.3))+'%';
+  document.getElementById('aiSafe').textContent=Math.floor(Math.max(85,98-reduc*.05))+'%';
+  document.getElementById('aiCov2').textContent=Math.floor(cov)+'%';
+  logCount++;
+  if(logCount%90===0) addLog('info',`Progress ${Math.floor(pct)}% · Coverage ${Math.floor(cov)}%`);
+  if(logCount%150===0) addLog('good',`Tumor reduction: ${reduc.toFixed(1)}% achieved`);
+  if(tissueTemp>58&&logCount%60===0) addLog('warn2','High tissue temp: '+tissueTemp.toFixed(1)+'°C');
+  if(pct>=100){ endSession(); }
+},100);
+lastTick=Date.now();
+
+function togglePause(){
+  paused=!paused; lastTick=Date.now();
+  const btn=document.getElementById('btnPause');
+  btn.textContent=paused?'▶ Resume Treatment':'⏸ Pause Treatment';
+  btn.className='ctrl-btn2 '+(paused?'danger2':'blue');
+  addLog(paused?'warn2':'info',paused?'Session PAUSED':'Session RESUMED');
+}
+
+function emergencyStop(){
+  paused=true; active=false;
+  addLog('warn2','⚠ EMERGENCY STOP ACTIVATED');
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(255,90,110,.12);z-index:999;pointer-events:none;';
+  document.body.appendChild(ov); setTimeout(()=>ov.remove(),700);
+}
+
+function endSession(){
+  active=false;
+  const pct=Math.min(((elapsed/1000)/(S.dur*60))*100,100);
+  const reduc=((S.size-curSize)/S.size*100);
+  document.getElementById('rmBody').innerHTML=`
+    <div class="rm-stat"><span>Patient</span><strong>${S.name}</strong></div>
+    <div class="rm-stat"><span>Duration</span><strong>${document.getElementById('sessionTimer').textContent}</strong></div>
+    <div class="rm-stat"><span>Energy Delivered</span><strong>${(energyDel/1000).toFixed(2)} kJ</strong></div>
+    <div class="rm-stat"><span>Frequency</span><strong>${P.freq.toFixed(1)} MHz</strong></div>
+    <div class="rm-stat"><span>Initial Tumor Ø</span><strong>${S.size} mm</strong></div>
+    <div class="rm-stat"><span>Final Tumor Ø</span><strong>${curSize.toFixed(1)} mm</strong></div>
+    <div class="rm-stat"><span>Reduction</span><strong style="color:var(--green)">${reduc.toFixed(1)}%</strong></div>
+    <div class="rm-stat"><span>Status</span><strong style="color:var(--green)">✓ COMPLETE</strong></div>
+  `;
+  document.getElementById('resultModal').style.display='flex';
+}
+function saveReport(){ document.getElementById('resultModal').style.display='none'; setTimeout(()=>window.location.href='index.html',600); }
+function captureSnapshot(){ addLog('info','Snapshot captured and saved.'); }
+
+function addLog(type,msg){
+  const log=document.getElementById('sessionLog');
+  const e=document.createElement('div'); e.className='log-entry2 '+type;
+  e.innerHTML=`<span class="log-time2">${document.getElementById('sessionTimer').textContent}</span><span class="log-msg2">${msg}</span>`;
+  log.insertBefore(e,log.firstChild);
+  while(log.children.length>30) log.removeChild(log.lastChild);
+}
+
+/* ── Vitals simulation ── */
+let hr=72,bp=120,o2=98,coreTemp=36.6;
+setInterval(()=>{
+  hr=Math.max(58,Math.min(100,hr+(Math.random()-.5)*3));
+  bp=Math.max(100,Math.min(145,bp+(Math.random()-.5)*4));
+  o2=Math.max(94,Math.min(100,o2+(Math.random()-.5)*.5));
+  coreTemp=Math.max(36,Math.min(37.5,coreTemp+(Math.random()-.5)*.05));
+  document.getElementById('rtHR').textContent=Math.round(hr);
+  document.getElementById('rtBP').textContent=Math.round(bp)+'/'+Math.round(bp*.67);
+  document.getElementById('rtO2').textContent=Math.round(o2);
+  document.getElementById('rtTemp').textContent=coreTemp.toFixed(1);
+},1200);
+
+/* ── Tumor response chart ── */
+let tumorHistory=[S.size];
+const trCanvas=document.getElementById('tumorRespCanvas');
+const trCtx=trCanvas.getContext('2d');
+function drawTumorResp(){
+  trCanvas.width=trCanvas.offsetWidth*devicePixelRatio;
+  trCanvas.height=trCanvas.offsetHeight*devicePixelRatio;
+  trCtx.scale(devicePixelRatio,devicePixelRatio);
+  const W=trCanvas.offsetWidth,H=trCanvas.offsetHeight;
+  trCtx.clearRect(0,0,W,H);
+  trCtx.fillStyle='rgba(0,0,0,.2)'; trCtx.fillRect(0,0,W,H);
+  if(tumorHistory.length<2) return;
+  const mn=S.size*.3,mx=S.size;
+  trCtx.beginPath();
+  tumorHistory.forEach((v,i)=>{
+    const x=(i/(tumorHistory.length-1))*W;
+    const y=H-((v-mn)/(mx-mn))*(H*.8)-H*.1;
+    i===0?trCtx.moveTo(x,y):trCtx.lineTo(x,y);
+  });
+  trCtx.lineTo(W,H); trCtx.lineTo(0,H); trCtx.closePath();
+  const g=trCtx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(255,90,110,.25)'); g.addColorStop(1,'rgba(255,90,110,.02)');
+  trCtx.fillStyle=g; trCtx.fill();
+  trCtx.beginPath(); tumorHistory.forEach((v,i)=>{
+    const x=(i/(tumorHistory.length-1))*W;
+    const y=H-((v-mn)/(mx-mn))*(H*.8)-H*.1;
+    i===0?trCtx.moveTo(x,y):trCtx.lineTo(x,y);
+  });
+  trCtx.strokeStyle=var_red; trCtx.lineWidth=1.5; trCtx.stroke();
+}
+const var_red='#FF5A6E';
+setInterval(()=>{ tumorHistory.push(curSize); if(tumorHistory.length>120) tumorHistory.shift(); drawTumorResp(); },500);
+
+/* ── Wave Monitor ── */
+const wCanvas=document.getElementById('waveCanvas');
+const wCtx=wCanvas.getContext('2d');
+let wOff=0,wFrozen=false;
+function hexToRgba(h,a){ const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; }
+
+function resizeWave(){
+  const vp=wCanvas.parentElement;
+  wCanvas.width=vp.clientWidth*Math.min(devicePixelRatio,2);
+  wCanvas.height=vp.clientHeight*Math.min(devicePixelRatio,2);
+}
+resizeWave(); window.addEventListener('resize',resizeWave);
+
+function drawWave(){
+  requestAnimationFrame(drawWave);
+  const dpr=Math.min(devicePixelRatio,2);
+  const W=wCanvas.width/dpr,H=wCanvas.height/dpr;
+  wCtx.clearRect(0,0,wCanvas.width,wCanvas.height);
+  wCtx.save(); wCtx.scale(dpr,dpr);
+
+  // grid
+  wCtx.strokeStyle='rgba(78,140,255,.07)'; wCtx.lineWidth=1;
+  for(let x=0;x<W;x+=30){ wCtx.beginPath(); wCtx.moveTo(x,0); wCtx.lineTo(x,H); wCtx.stroke(); }
+  for(let y=0;y<H;y+=20){ wCtx.beginPath(); wCtx.moveTo(0,y); wCtx.lineTo(W,y); wCtx.stroke(); }
+
+  const amp1=H*.14*(P.inten/1500)*(P.duty/100);
+  const amp2=amp1*.65, amp3=amp1*.35;
+  if(!paused&&active) wOff+=P.freq*.9;
+
+  drawWaveLine(wCtx,W,H*.35,amp1,'#4E8CFF',
+    x=>Math.sin((x/W*8*Math.PI)+wOff*.12)+.2*Math.sin((x/W*16*Math.PI)+wOff*.24)+.04*(Math.random()-.5),true);
+  drawWaveLine(wCtx,W,H*.65,amp2,'#FF7BAC',
+    x=>Math.sin((x/W*12*Math.PI)+wOff*.08+.8)+.3*Math.sin((x/W*6*Math.PI)+wOff*.04)+.03*(Math.random()-.5),false);
+  drawWaveLine(wCtx,W,H*.35,amp3*.5,'#34D6A6',
+    x=>Math.sin((x/W*8*Math.PI)),false);
+
+  wCtx.restore();
+  document.getElementById('wfAmp').textContent=(amp1/(H*.05)).toFixed(1)+' MPa';
+}
+
+function drawWaveLine(ctx,W,cy,amp,color,fn,filled){
+  ctx.beginPath();
+  for(let x=0;x<W;x++){
+    const y=cy+fn(x)*amp;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  if(filled){
+    ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.shadowBlur=14; ctx.shadowColor=color; ctx.stroke(); ctx.shadowBlur=0;
+    ctx.beginPath();
+    for(let x=0;x<W;x++){ const y=cy+fn(x)*amp; x===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.lineTo(W,cy); ctx.lineTo(0,cy); ctx.closePath();
+    const g=ctx.createLinearGradient(0,cy-amp,0,cy+amp);
+    g.addColorStop(0,hexToRgba(color,.18)); g.addColorStop(1,hexToRgba(color,.02));
+    ctx.fillStyle=g; ctx.fill(); ctx.restore();
+  } else {
+    ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.globalAlpha=.55; ctx.stroke(); ctx.globalAlpha=1;
+  }
+}
+
+drawWave();
+function toggleWaveMode(){
+  wFrozen=!wFrozen; paused=wFrozen; if(!paused) lastTick=Date.now();
+  document.getElementById('waveModeBtn').textContent=wFrozen?'FREEZE':'LIVE';
+}
+
+/* ── THREE.JS: GLB Brain/Tumor Scene ── */
+const stage=document.getElementById('brainStage');
+const hotLayer=document.getElementById('hotspotLayer');
+const regionPanel={name:document.getElementById('rpName'),value:document.getElementById('rpValue'),desc:document.getElementById('rpDesc')};
+
+const tScene=new THREE.Scene();
+const tCam=new THREE.PerspectiveCamera(42,1,.1,100);
+tCam.position.set(0,0,6.4);
+
+const tRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+tRenderer.setClearColor(0x000000,0);
+tRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+stage.insertBefore(tRenderer.domElement,stage.children[1]);
+
+function sizeRenderer(){
+  const w=stage.clientWidth,h=stage.clientHeight-50;
+  tRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  tRenderer.setSize(w,Math.max(h,200));
+  tCam.aspect=w/Math.max(h,200);
+  tCam.updateProjectionMatrix();
+}
+sizeRenderer();
+new ResizeObserver(sizeRenderer).observe(stage);
+
+// Lights
+tScene.add(new THREE.AmbientLight(0x1a2040,1.1));
+const pl1=new THREE.PointLight(0xff6fa0,1.3,24); pl1.position.set(3.2,2.4,4.2); tScene.add(pl1);
+const pl2=new THREE.PointLight(0x4e8cff,1.0,24); pl2.position.set(-3.5,-1.2,3.4); tScene.add(pl2);
+const pl3=new THREE.PointLight(0x6fa8ff,.5,24); pl3.position.set(0,-3,-3); tScene.add(pl3);
+
+const modelGroup=new THREE.Group();
+tScene.add(modelGroup);
+
+// Halo ring
+const ringGeo=new THREE.TorusGeometry(3.2,.007,8,128);
+const ringMat=new THREE.MeshBasicMaterial({color:0x4e8cff,transparent:true,opacity:.18});
+const haloRing=new THREE.Mesh(ringGeo,ringMat);
+haloRing.rotation.x=Math.PI/2+.25;
+tScene.add(haloRing);
+
+// Scan sweep
+const swGeo=new THREE.CircleGeometry(2.4,48);
+const swMat=new THREE.MeshBasicMaterial({color:0xff6fa0,transparent:true,opacity:.05,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+const swMesh=new THREE.Mesh(swGeo,swMat);
+swMesh.rotation.x=Math.PI/2;
+tScene.add(swMesh);
+
+// Glow sprite texture
+function makeGlowTex(){
+  const c=document.createElement('canvas'); c.width=128; c.height=128;
+  const ctx=c.getContext('2d');
+  const g=ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.35,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+const glowTex=makeGlowTex();
+
+// Hotspot definitions (will be placed on/near model)
+const hotspotData=[
+  {name:'Tumor Core',value:()=>`Ø ${curSize.toFixed(1)} mm`,desc:'Primary tumor mass. AI actively targeting for ablation via HIFU beam focus.',dir:[.4,.1,.88]},
+  {name:'Ablation Zone',value:()=>`${((S.size-curSize)/S.size*100).toFixed(1)}% ablated`,desc:'Region of confirmed thermal ablation. Tissue necrosis detected.',dir:[.55,.2,.78]},
+  {name:'Safety Margin',value:()=>`${Math.round(Math.max(85,98-(S.size-curSize)/S.size*5))}% intact`,desc:'Healthy surrounding tissue. AI protection boundary active.',dir:[-.3,.35,.87]},
+];
+
+const hotspots=[];
+hotspotData.forEach((d,idx)=>{
+  const dirV=new THREE.Vector3(d.dir[0],d.dir[1],d.dir[2]).normalize();
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  sp.position.copy(dirV.clone().multiplyScalar(2.2));
+  sp.scale.set(.25,.25,1);
+  sp.userData=d;
+  modelGroup.add(sp);
+
+  const dom=document.createElement('div');
+  dom.className='hotspot-dot2';
+  hotLayer.appendChild(dom);
+  dom.addEventListener('click',(e)=>{ e.stopPropagation(); selectHot(idx); });
+
+  hotspots.push({sprite:sp,dom,data:d});
+});
+
+let selIdx=-1;
+function selectHot(idx){
+  selIdx=idx;
+  hotspots.forEach((h,i)=>h.dom.classList.toggle('selected',i===idx));
+  const d=hotspots[idx].data;
+  regionPanel.name.textContent=d.name;
+  regionPanel.value.textContent=d.value();
+  regionPanel.desc.textContent=d.desc;
+}
+
+// Load GLB model
+const gltfScript2=document.createElement('script');
+gltfScript2.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+gltfScript2.onload=()=>{
+  const loader=new THREE.GLTFLoader();
+  loader.load(
+    'brain model/brain_tumor_obj.glb',
+    (gltf)=>{
+      const model=gltf.scene;
+      const box=new THREE.Box3().setFromObject(model);
+      const center=box.getCenter(new THREE.Vector3());
+      const size=box.getSize(new THREE.Vector3());
+      const maxDim=Math.max(size.x,size.y,size.z);
+      const scale=3.8/maxDim;
+      model.scale.setScalar(scale);
+      model.position.sub(center.multiplyScalar(scale));
+      model.traverse(child=>{
+        if(child.isMesh){
+          // Keep original materials but add emissive tint
+          if(child.material){
+            if(Array.isArray(child.material)){
+              child.material.forEach(m=>{ m.needsUpdate=true; });
+            } else {
+              child.material.needsUpdate=true;
+            }
+          }
+        }
+      });
+      modelGroup.add(model);
+    },
+    undefined,
+    (err)=>{
+      console.warn('Brain GLB failed, using procedural',err);
+      buildProceduralBrain();
+    }
+  );
+};
+document.head.appendChild(gltfScript2);
+
+function buildProceduralBrain(){
+  function hash3(x,y,z){ const s=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453123; return s-Math.floor(s); }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function noise3(x,y,z){
+    const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z);
+    const xf=x-xi,yf=y-yi,zf=z-zi;
+    const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf);
+    const h=(dx,dy,dz)=>hash3(xi+dx,yi+dy,zi+dz);
+    return lerp(lerp(lerp(h(0,0,0),h(1,0,0),u),lerp(h(0,1,0),h(1,1,0),u),v),lerp(lerp(h(0,0,1),h(1,0,1),u),lerp(h(0,1,1),h(1,1,1),u),v),w);
+  }
+  const geo=new THREE.IcosahedronGeometry(1.6,4);
+  const pos=geo.attributes.position; const v=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i); const d=v.clone().normalize();
+    const n1=noise3(d.x*1.6+10,d.y*1.6+10,d.z*1.6+10);
+    const n2=noise3(d.x*4+40,d.y*4+40,d.z*4+40);
+    const fissure=Math.exp(-(d.x*d.x)/.02)*.22;
+    let r=1.6*(1+.16*(n1-.5)+.075*(n2-.5)); r-=1.6*fissure; r*=(d.y<-.55?.86:1);
+    v.copy(d).multiplyScalar(r); pos.setXYZ(i,v.x,v.y,v.z);
+  }
+  geo.computeVertexNormals();
+  const mat=new THREE.MeshPhongMaterial({color:0x2a1420,emissive:0xff6fa0,emissiveIntensity:.14,specular:0x4e8cff,shininess:52,transparent:true,opacity:.93});
+  modelGroup.add(new THREE.Mesh(geo,mat));
+  const wfMat=new THREE.LineBasicMaterial({color:0x6fa8ff,transparent:true,opacity:.15,blending:THREE.AdditiveBlending});
+  const wfMesh=new THREE.LineSegments(new THREE.WireframeGeometry(geo),wfMat);
+  wfMesh.scale.setScalar(1.005); modelGroup.add(wfMesh);
+}
+
+/* Drag/rotate */
+let dragging2=false,lastX2=0,lastY2=0,rotY2=.5,rotX2=-.12,autoRot=true;
+stage.addEventListener('pointerdown',(e)=>{ dragging2=true; autoRot=false; lastX2=e.clientX; lastY2=e.clientY; stage.classList.add('dragging'); });
+window.addEventListener('pointerup',()=>{ dragging2=false; stage.classList.remove('dragging'); });
+window.addEventListener('pointermove',(e)=>{
+  if(!dragging2) return;
+  const dx=e.clientX-lastX2,dy=e.clientY-lastY2;
+  lastX2=e.clientX; lastY2=e.clientY;
+  rotY2+=dx*.006; rotX2=Math.max(-.7,Math.min(.7,rotX2+dy*.006));
+});
+stage.addEventListener('wheel',(e)=>{ e.preventDefault(); tCam.position.z=Math.max(4,Math.min(10,tCam.position.z+e.deltaY*.004)); },{passive:false});
+
+const tmpW=new THREE.Vector3(),tmpP=new THREE.Vector3();
+const clock2=new THREE.Clock();
+let fC=0,lastFPS=Date.now(),fps=60;
+
+function animateScene(){
+  requestAnimationFrame(animateScene);
+  const t=clock2.getElapsedTime();
+  if(autoRot) rotY2+=.0016;
+  modelGroup.rotation.y+=(rotY2-modelGroup.rotation.y)*.15;
+  modelGroup.rotation.x+=(rotX2-modelGroup.rotation.x)*.15;
+  haloRing.rotation.z+=.0009;
+  swMesh.position.y=Math.sin(t*.42)*1.8;
+  swMat.opacity=.04+.025*Math.sin(t*2.2);
+
+  hotspots.forEach((h,i)=>{
+    const s=.22+Math.sin(t*2+i*1.3)*.04;
+    h.sprite.scale.set(s,s,1);
+  });
+
+  tRenderer.render(tScene,tCam);
+  fC++;
+  const now=Date.now();
+  if(now-lastFPS>1000){ fps=fC; fC=0; lastFPS=now; document.getElementById('fpsBadge').textContent=fps+' FPS'; }
+
+  const rect=stage.getBoundingClientRect();
+  hotspots.forEach(h=>{
+    h.sprite.getWorldPosition(tmpW);
+    tmpP.copy(tmpW).project(tCam);
+    const x=(tmpP.x*.5+.5)*rect.width;
+    const y=(-tmpP.y*.5+.5)*rect.height;
+    h.dom.style.left=x+'px'; h.dom.style.top=y+'px';
+    const dir=tmpW.clone().sub(tCam.position).normalize();
+    h.dom.style.opacity=tmpP.z>1?'0.1':'1';
+    h.dom.style.pointerEvents=tmpP.z>1?'none':'auto';
+  });
+
+  if(selIdx>=0){
+    const d=hotspots[selIdx].data;
+    regionPanel.value.textContent=d.value();
+  }
+}
+animateScene();
+function toggleGrid(){}
+function resetCam(){ rotY2=.5; rotX2=-.12; autoRot=true; }
+
+selectHot(0);
+</script>
+</body>
+</html>

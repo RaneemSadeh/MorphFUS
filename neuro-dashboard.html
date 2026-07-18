@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Neuroline — General Indicators of the Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0C11;
+    --bg-soft:#0F131B;
+    --panel:#12161F;
+    --panel-border:rgba(255,255,255,0.07);
+    --glass:rgba(255,255,255,0.035);
+    --text:#EEF1F7;
+    --text-dim:#8A93A8;
+    --text-faint:#5B6478;
+    --blue:#4E8CFF;
+    --blue-dim:#2C4E8F;
+    --pink:#FF7BAC;
+    --pink-dim:#8F3F5E;
+    --red:#FF5A6E;
+    --green:#34D6A6;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 600px at 62% 38%, rgba(255,123,172,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 700px at 20% 10%, rgba(78,140,255,0.07), transparent 55%),
+      var(--bg);
+    min-height:100vh;
+  }
+
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .display{font-family:'Space Grotesk', sans-serif;}
+
+  /* ---------- NAV ---------- */
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 32px; position:sticky; top:0; z-index:50;
+    backdrop-filter:blur(14px); background:rgba(10,12,17,0.72);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:30px; height:30px; border-radius:9px;
+    background:conic-gradient(from 200deg, var(--blue), var(--pink), var(--blue));
+    position:relative; flex-shrink:0;
+    box-shadow:0 0 18px rgba(78,140,255,0.45);
+  }
+  .brand-mark::after{
+    content:''; position:absolute; inset:6px; border-radius:5px; background:var(--bg);
+  }
+  .brand-name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:17px; letter-spacing:0.2px;}
+  .brand-name span{color:var(--blue);}
+  nav.links{display:flex; gap:30px; list-style:none;}
+  .links a{color:var(--text-dim); text-decoration:none; font-size:14px; font-weight:500; transition:color .2s;}
+  .links a:hover{color:var(--text);}
+  .links a.active{color:var(--blue);}
+  .navlist{display:flex; gap:30px; align-items:center;}
+  @media (max-width:900px){ .navlist{display:none;} }
+
+  /* ---------- LAYOUT ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns: 348px minmax(360px,1fr) 320px;
+    gap:22px;
+    padding:28px 28px 60px;
+    max-width:1680px; margin:0 auto;
+  }
+  @media (max-width:1200px){
+    .layout{grid-template-columns:1fr; }
+    .center-col{order:-1;}
+  }
+
+  .section-label{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;
+    color:var(--text-dim); text-transform:uppercase; letter-spacing:0.09em; margin:0 0 14px;
+  }
+  .section-label::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--blue); box-shadow:0 0 8px var(--blue); }
+
+  /* ---------- CARDS ---------- */
+  .card{
+    background:linear-gradient(180deg, var(--glass), transparent), var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius-md);
+    padding:16px;
+  }
+  .tile-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:26px; }
+  .tile{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius-sm);
+    padding:13px 10px; text-align:left;
+  }
+  .tile .val{font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+  .tile .lbl{font-size:11px; color:var(--text-faint); margin-top:3px; line-height:1.3;}
+
+  .param-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+  .param{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius-sm);
+    padding:13px 14px;
+  }
+  .param .top{display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--text-dim); margin-bottom:8px;}
+  .param .icon{width:16px;height:16px;opacity:.75;}
+  .param .big{font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600;}
+  .param .big.pulse{color:var(--pink);}
+  .param .sub{font-size:10.5px; color:var(--text-faint); margin-top:2px;}
+
+  .cond-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .cond-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius-sm);
+    padding:12px; display:flex; flex-direction:column; gap:10px; min-height:172px;
+  }
+  .cond-head{display:flex; align-items:center; gap:8px;}
+  .cond-avatar{
+    width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, var(--blue), #1c3a72); font-size:12px; flex-shrink:0;
+  }
+  .cond-doc{font-size:10px; color:var(--text-faint); line-height:1.25;}
+  .cond-title{font-size:13px; font-weight:600; margin-top:auto;}
+  .cond-date{font-size:10px; color:var(--text-faint);}
+  .scan-strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; border-radius:6px; overflow:hidden; height:52px;}
+  .scan-strip div{ background:
+      radial-gradient(circle at 50% 45%, rgba(120,150,255,0.5), rgba(10,14,22,0.9) 65%);
+      position:relative;
+    }
+  .scan-strip div::after{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 50% 50%, transparent 0 2px, rgba(255,255,255,0.05) 2px 3px);}
+  .blood-bar{ background:#0E1420; border-radius:8px; padding:10px; display:flex; align-items:center; gap:10px; }
+  .blood-fill-wrap{flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;}
+  .blood-fill{height:100%; width:20%; background:linear-gradient(90deg,var(--blue),var(--pink)); border-radius:4px; transition:width .6s ease;}
+  .blood-pct{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-dim); min-width:32px; text-align:right;}
+  .ecg{width:100%; height:52px;}
+  .ecg path{fill:none; stroke:var(--blue); stroke-width:1.6; filter:drop-shadow(0 0 4px rgba(78,140,255,0.6));}
+
+  .h1-wrap{margin-bottom:26px;}
+  .eyebrow{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .brain-chip{
+    display:flex; align-items:center; gap:2px; height:30px; border-radius:15px; overflow:hidden;
+    background:#050608; padding:2px 12px 2px 2px; border:1px solid var(--panel-border);
+  }
+  .brain-chip .dot{width:22px;height:22px;border-radius:50%; margin-left:-10px;}
+  .brain-chip .dot:first-child{margin-left:0;}
+  .brain-chip .txt{font-size:10.5px; color:var(--text-dim); margin-left:6px; letter-spacing:.04em;}
+  h1{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:-0.02em;
+    font-size:clamp(30px,3.4vw,44px); line-height:1.06; margin:0;
+  }
+  h1 .accent{color:var(--blue);}
+
+  /* ---------- CENTER: BRAIN ---------- */
+  .center-col{ position:relative; display:flex; flex-direction:column; min-height:640px; }
+  .brain-stage{
+    position:relative; flex:1; border-radius:var(--radius-lg);
+    background:radial-gradient(ellipse at 50% 42%, rgba(78,140,255,0.10), transparent 65%);
+    overflow:hidden; min-height:560px;
+    cursor:grab;
+  }
+  .brain-stage.dragging{cursor:grabbing;}
+  .brain-stage canvas{display:block; width:100%; height:100%;}
+  .stage-hint{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:var(--text-faint); letter-spacing:.03em; pointer-events:none;
+    display:flex; gap:14px; opacity:.8;
+  }
+  .stage-hint b{color:var(--text-dim); font-weight:500;}
+
+  .hotspot-dot{
+    position:absolute; width:18px; height:18px; margin:-9px 0 0 -9px;
+    border-radius:50%; cursor:pointer; pointer-events:auto;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .25s ease;
+  }
+  .hotspot-dot::before{
+    content:''; position:absolute; inset:0; border-radius:50%;
+    background:rgba(255,123,172,0.18); border:1px solid rgba(255,123,172,0.55);
+    animation:ping 2.4s ease-out infinite;
+  }
+  .hotspot-dot::after{
+    content:''; width:6px; height:6px; border-radius:50%; background:#fff;
+    box-shadow:0 0 10px 2px rgba(255,255,255,0.8); position:relative; z-index:1;
+  }
+  .hotspot-dot.selected::after{ background:var(--pink); box-shadow:0 0 12px 3px rgba(255,123,172,0.9); }
+  @keyframes ping{ 0%{transform:scale(0.6); opacity:.9;} 80%{transform:scale(1.9); opacity:0;} 100%{opacity:0;} }
+
+  .region-panel{
+    position:absolute; left:18px; bottom:18px; max-width:280px;
+    background:rgba(10,12,17,0.82); backdrop-filter:blur(10px);
+    border:1px solid var(--panel-border); border-radius:var(--radius-md);
+    padding:14px 16px; transition:opacity .3s ease, transform .3s ease;
+  }
+  .region-panel .rp-label{font-size:10.5px; color:var(--text-faint); letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px;}
+  .region-panel .rp-name{font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; margin-bottom:6px;}
+  .region-panel .rp-value{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--pink); margin-bottom:6px;}
+  .region-panel .rp-desc{font-size:12px; color:var(--text-dim); line-height:1.45;}
+
+  .top-tag{
+    position:absolute; top:16px; left:18px; display:flex; align-items:center; gap:8px;
+    font-size:11px; color:var(--text-dim); background:rgba(10,12,17,0.6); border:1px solid var(--panel-border);
+    padding:6px 12px; border-radius:20px; backdrop-filter:blur(8px);
+  }
+  .top-tag .live{width:6px;height:6px;border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 1.8s infinite;}
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* ---------- RIGHT COL ---------- */
+  .patient-card{padding:16px;}
+  .patient-top{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .avatar{
+    width:42px; height:42px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg,var(--pink),var(--blue));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px; color:#0A0C11;
+  }
+  .patient-name{font-weight:600; font-size:14.5px;}
+  .patient-sub{font-size:11px; color:var(--text-faint); margin-top:1px;}
+  .chev{margin-left:auto; color:var(--text-faint);}
+  .flag-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 12px; background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:var(--radius-sm); margin-bottom:8px;
+  }
+  .flag-row .fl-name{font-size:13px;}
+  .toggle{ width:34px; height:19px; border-radius:12px; background:#232838; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+  .toggle::after{ content:''; position:absolute; width:15px; height:15px; border-radius:50%; background:var(--text-faint); top:2px; left:2px; transition:all .2s; }
+  .toggle.on{background:rgba(255,90,110,0.18);}
+  .toggle.on::after{ left:17px; background:var(--red); box-shadow:0 0 8px rgba(255,90,110,0.7); }
+
+  .schedule-card{margin-top:20px; padding:16px;}
+  .next-checkup{display:flex; gap:12px; align-items:center; margin-bottom:14px;}
+  .cal-icon{
+    width:38px; height:38px; border-radius:10px; background:var(--panel); border:1px solid var(--panel-border);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .nc-label{font-size:10.5px; color:var(--text-faint);}
+  .nc-date{font-size:14px; font-weight:600; font-family:'Space Grotesk',sans-serif;}
+  .cal-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius-sm);
+    padding:9px 12px; margin-bottom:12px;
+  }
+  .cal-nav button{
+    background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:15px; padding:2px 6px;
+    border-radius:6px; transition:background .15s, color .15s;
+  }
+  .cal-nav button:hover{background:rgba(255,255,255,0.06); color:var(--text);}
+  .cal-date{font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.02em;}
+  .doctor-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius-sm); margin-bottom:14px;}
+  .doc-avatar{width:30px;height:30px;border-radius:9px; background:linear-gradient(135deg,#3a4a6b,#1b2338); flex-shrink:0; display:flex;align-items:center;justify-content:center; font-size:12px;}
+  .doc-name{font-size:12.5px; font-weight:500;}
+  .doc-role{font-size:10px; color:var(--text-faint);}
+  .consult-btn{
+    width:100%; padding:12px; border-radius:11px; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--blue),#3567d1); color:#fff; font-weight:600; font-size:13.5px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:filter .15s, transform .15s;
+  }
+  .consult-btn:hover{filter:brightness(1.1);}
+  .consult-btn:active{transform:scale(0.98);}
+
+  .toast{
+    position:fixed; bottom:24px; right:24px; background:var(--panel); border:1px solid var(--panel-border);
+    padding:13px 18px; border-radius:12px; font-size:13px; color:var(--text);
+    box-shadow:0 10px 30px rgba(0,0,0,0.4); display:flex; align-items:center; gap:10px;
+    transform:translateY(20px); opacity:0; pointer-events:none; transition:all .35s ease; z-index:100;
+  }
+  .toast.show{ transform:translateY(0); opacity:1; }
+  .toast .tdot{width:8px;height:8px;border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green);}
+
+  ::selection{ background:var(--blue); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-name">Neuro<span>line</span></div>
+  </div>
+  <div class="navlist">
+    <ul class="links" style="display:flex; gap:30px; margin:0; padding:0;">
+      <li><a href="#" class="active">Technology</a></li>
+      <li><a href="#">Product</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Contact</a></li>
+      <li><a href="#">Help</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+    <div class="h1-wrap">
+      <div class="eyebrow">
+        <div class="brain-chip">
+          <div class="dot" style="background:radial-gradient(circle at 40% 35%, #6fb4ff, #1b3a6e);"></div>
+          <div class="dot" style="background:radial-gradient(circle at 40% 35%, #ff9dc4, #7a2f4f);"></div>
+          <div class="txt">LIVE SCAN FEED</div>
+        </div>
+      </div>
+      <h1>General indicators<br>of the <span class="accent">Brain</span></h1>
+    </div>
+
+    <div class="section-label">My Brain Condition</div>
+    <div class="tile-row">
+      <div class="tile"><div class="val">1.5L</div><div class="lbl">CSF fluid</div></div>
+      <div class="tile"><div class="val">10ng</div><div class="lbl">Dopamine</div></div>
+      <div class="tile"><div class="val">50ng</div><div class="lbl">Serotonin</div></div>
+      <div class="tile"><div class="val">9mg</div><div class="lbl">Norepinephrine</div></div>
+    </div>
+
+    <div class="section-label">My Physiological Parameters</div>
+    <div class="param-row">
+      <div class="param">
+        <div class="top"><span>Temperature</span><span>🌡️</span></div>
+        <div class="big">36.6°C</div>
+        <div class="sub">Within normal range</div>
+      </div>
+      <div class="param">
+        <div class="top"><span>Sleep time</span><span>🌙</span></div>
+        <div class="big">8h 12m</div>
+        <div class="sub">Deep sleep 2h 40m</div>
+      </div>
+      <div class="param">
+        <div class="top"><span>Blood pressure</span><span>❤️</span></div>
+        <div class="big">120<span style="color:var(--text-faint);">/</span>80</div>
+        <div class="sub">Top / bottom pressure</div>
+      </div>
+      <div class="param">
+        <div class="top"><span>Pulse</span><span>📈</span></div>
+        <div class="big pulse" id="pulseVal">65 bpm</div>
+        <div class="sub">Resting heart rate</div>
+      </div>
+    </div>
+
+    <div class="section-label">My Brain Condition</div>
+    <div class="cond-row">
+      <div class="cond-card">
+        <div class="cond-head">
+          <div class="cond-avatar">🩺</div>
+          <div class="cond-doc">Dr. Rodriguez<br>Neurology</div>
+        </div>
+        <div class="cond-title">Full Brain<br>MRI</div>
+        <div class="scan-strip"><div></div><div></div><div></div><div></div></div>
+        <div class="cond-date">03.04.2026</div>
+      </div>
+
+      <div class="cond-card">
+        <div class="cond-head">
+          <div class="cond-avatar">🧪</div>
+          <div class="cond-doc">Lab Panel<br>3 markers</div>
+        </div>
+        <div class="cond-title">Full Blood<br>Test</div>
+        <div class="blood-bar"><div class="blood-fill-wrap"><div class="blood-fill" id="bloodFill"></div></div><div class="blood-pct" id="bloodPct">20%</div></div>
+        <div class="cond-date">11.04.2026</div>
+      </div>
+
+      <div class="cond-card">
+        <div class="cond-head">
+          <div class="cond-avatar">🫀</div>
+          <div class="cond-doc">Dr. Collins<br>Cardiology</div>
+        </div>
+        <div class="cond-title">Visit<br>Cardiologist</div>
+        <svg class="ecg" viewBox="0 0 200 50" preserveAspectRatio="none">
+          <path id="ecgPath" d="M0,25 L30,25 L38,10 L46,40 L54,25 L70,25 L78,5 L86,45 L94,25 L200,25"/>
+        </svg>
+        <div class="cond-date">02.04.2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER COLUMN: 3D BRAIN -->
+  <div class="center-col">
+    <div class="brain-stage" id="brainStage">
+      <div class="top-tag"><span class="live"></span> Interactive model · drag to rotate</div>
+      <div id="hotspotLayer"></div>
+      <div class="region-panel" id="regionPanel">
+        <div class="rp-label">Region Insight</div>
+        <div class="rp-name" id="rpName">Select a marker</div>
+        <div class="rp-value" id="rpValue">—</div>
+        <div class="rp-desc" id="rpDesc">Click any glowing node on the model to inspect real-time activity for that region.</div>
+      </div>
+      <div class="stage-hint"><span><b>Drag</b> rotate</span><span><b>Scroll</b> zoom</span><span><b>Click</b> a node</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+    <div class="section-label">Patient</div>
+    <div class="card patient-card">
+      <div class="patient-top">
+        <div class="avatar">MT</div>
+        <div>
+          <div class="patient-name">Maya Trent</div>
+          <div class="patient-sub">Patient ID · 88213</div>
+        </div>
+        <div class="chev">⌄</div>
+      </div>
+      <div class="flag-row">
+        <div class="fl-name">Parkinson's disease</div>
+        <div class="toggle on" data-toggle></div>
+      </div>
+      <div class="flag-row">
+        <div class="fl-name">Migraine tracking</div>
+        <div class="toggle" data-toggle></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:24px;">My Schedule</div>
+    <div class="card schedule-card">
+      <div class="next-checkup">
+        <div class="cal-icon">📅</div>
+        <div>
+          <div class="nc-label">Next checkup</div>
+          <div class="nc-date">Fri, 05 Apr</div>
+        </div>
+      </div>
+      <div class="cal-nav">
+        <button id="calPrev">‹</button>
+        <div class="cal-date mono" id="calDate">05-Apr-26</div>
+        <button id="calNext">›</button>
+      </div>
+      <div class="doctor-row">
+        <div class="doc-avatar">👨‍⚕️</div>
+        <div>
+          <div class="doc-name">Dr. Hunter Jen</div>
+          <div class="doc-role">Neurologist · in-network</div>
+        </div>
+      </div>
+      <button class="consult-btn" id="consultBtn">Consult now →</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><span class="tdot"></span><span id="toastMsg">Consult request sent</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ================= UI: small interactions ================= */
+document.querySelectorAll('[data-toggle]').forEach(t=>{
+  t.addEventListener('click', ()=> t.classList.toggle('on'));
+});
+
+// pulse jitter
+setInterval(()=>{
+  const v = 62 + Math.floor(Math.random()*10);
+  document.getElementById('pulseVal').textContent = v + ' bpm';
+}, 2200);
+
+// blood test loading loop
+let bloodPct = 20;
+setInterval(()=>{
+  bloodPct += 7;
+  if(bloodPct > 100) bloodPct = 12;
+  document.getElementById('bloodFill').style.width = bloodPct + '%';
+  document.getElementById('bloodPct').textContent = bloodPct + '%';
+}, 1400);
+
+// ecg redraw wiggle
+const ecgPaths = [
+  "M0,25 L30,25 L38,10 L46,40 L54,25 L70,25 L78,5 L86,45 L94,25 L200,25",
+  "M0,25 L26,25 L34,8 L42,42 L50,25 L70,25 L82,3 L90,47 L98,25 L200,25"
+];
+let ecgIdx = 0;
+setInterval(()=>{
+  ecgIdx = 1 - ecgIdx;
+  document.getElementById('ecgPath').setAttribute('d', ecgPaths[ecgIdx]);
+}, 900);
+
+// calendar nav
+let calDate = new Date(2026,3,5);
+const calFmt = d => {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return String(d.getDate()).padStart(2,'0') + '-' + months[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+};
+document.getElementById('calDate').textContent = calFmt(calDate);
+document.getElementById('calPrev').addEventListener('click', ()=>{
+  calDate.setDate(calDate.getDate()-1);
+  document.getElementById('calDate').textContent = calFmt(calDate);
+});
+document.getElementById('calNext').addEventListener('click', ()=>{
+  calDate.setDate(calDate.getDate()+1);
+  document.getElementById('calDate').textContent = calFmt(calDate);
+});
+
+// toast
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 3000);
+}
+document.getElementById('consultBtn').addEventListener('click', ()=>{
+  showToast('Consult request sent to Dr. Hunter Jen');
+});
+
+/* ================= 3D BRAIN ================= */
+(function(){
+  const stage = document.getElementById('brainStage');
+  const hotspotLayer = document.getElementById('hotspotLayer');
+  const regionPanel = { name: document.getElementById('rpName'), value: document.getElementById('rpValue'), desc: document.getElementById('rpDesc') };
+
+  // ---- value noise (original small implementation) ----
+  function hash3(x,y,z){
+    const s = Math.sin(x*127.1 + y*311.7 + z*74.7) * 43758.5453123;
+    return s - Math.floor(s);
+  }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function noise3(x,y,z){
+    const xi=Math.floor(x), yi=Math.floor(y), zi=Math.floor(z);
+    const xf=x-xi, yf=y-yi, zf=z-zi;
+    const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf), w=zf*zf*(3-2*zf);
+    const h=(dx,dy,dz)=>hash3(xi+dx,yi+dy,zi+dz);
+    const x00=lerp(h(0,0,0),h(1,0,0),u), x10=lerp(h(0,1,0),h(1,1,0),u);
+    const x01=lerp(h(0,0,1),h(1,0,1),u), x11=lerp(h(0,1,1),h(1,1,1),u);
+    const y0=lerp(x00,x10,v), y1=lerp(x01,x11,v);
+    return lerp(y0,y1,w);
+  }
+
+  // ---- scene ----
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  camera.position.set(0,0,6.4);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setClearColor(0x000000, 0);
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  function sizeRenderer(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setSize(w,h);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  sizeRenderer();
+  new ResizeObserver(sizeRenderer).observe(stage);
+
+  // lights
+  scene.add(new THREE.AmbientLight(0x22314f, 1.1));
+  const pLight1 = new THREE.PointLight(0xff6fa0, 1.3, 24); pLight1.position.set(3.2,2.4,4.2); scene.add(pLight1);
+  const pLight2 = new THREE.PointLight(0x4e8cff, 1.0, 24); pLight2.position.set(-3.5,-1.2,3.4); scene.add(pLight2);
+  const pLight3 = new THREE.PointLight(0x6fa8ff, 0.5, 24); pLight3.position.set(0,-3,-3); scene.add(pLight3);
+
+  // ---- procedural brain geometry ----
+  const baseGeo = new THREE.IcosahedronGeometry(1.6, 4);
+  const pos = baseGeo.attributes.position;
+  const v = new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos, i);
+    const dir = v.clone().normalize();
+    const n1 = noise3(dir.x*1.6+10, dir.y*1.6+10, dir.z*1.6+10);
+    const n2 = noise3(dir.x*4+40,  dir.y*4+40,  dir.z*4+40);
+    const n3 = noise3(dir.x*9+90,  dir.y*9+90,  dir.z*9+90);
+    const fissure = Math.exp(-(dir.x*dir.x)/0.02) * 0.22;
+    const flatten = dir.y < -0.55 ? 0.86 : 1;
+    let r = 1.6 * (1 + 0.16*(n1-0.5) + 0.075*(n2-0.5) + 0.035*(n3-0.5));
+    r -= 1.6*fissure;
+    r *= flatten;
+    v.copy(dir).multiplyScalar(r);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  baseGeo.computeVertexNormals();
+
+  const brainGroup = new THREE.Group();
+  scene.add(brainGroup);
+
+  const solidMat = new THREE.MeshPhongMaterial({
+    color:0x2a1420, emissive:0xff6fa0, emissiveIntensity:0.14,
+    specular:0x4e8cff, shininess:52, transparent:true, opacity:0.93
+  });
+  const solidMesh = new THREE.Mesh(baseGeo, solidMat);
+  brainGroup.add(solidMesh);
+
+  const wireGeo = new THREE.WireframeGeometry(baseGeo);
+  const wireMat = new THREE.LineBasicMaterial({ color:0x6fa8ff, transparent:true, opacity:0.16, blending:THREE.AdditiveBlending });
+  const wireMesh = new THREE.LineSegments(wireGeo, wireMat);
+  wireMesh.scale.setScalar(1.006);
+  brainGroup.add(wireMesh);
+
+  const pointsMat = new THREE.PointsMaterial({ color:0xffc3dc, size:0.018, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, sizeAttenuation:true });
+  const pointsMesh = new THREE.Points(baseGeo, pointsMat);
+  pointsMesh.scale.setScalar(1.001);
+  brainGroup.add(pointsMesh);
+
+  // halo ring
+  const ringGeo = new THREE.TorusGeometry(2.55, 0.006, 8, 128);
+  const ringMat = new THREE.MeshBasicMaterial({ color:0x4e8cff, transparent:true, opacity:0.22 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI/2 + 0.25;
+  scene.add(ring);
+
+  // scan sweep plane
+  const sweepGeo = new THREE.CircleGeometry(1.9, 48);
+  const sweepMat = new THREE.MeshBasicMaterial({ color:0xff6fa0, transparent:true, opacity:0.05, side:THREE.DoubleSide, blending:THREE.AdditiveBlending });
+  const sweepMesh = new THREE.Mesh(sweepGeo, sweepMat);
+  sweepMesh.rotation.x = Math.PI/2;
+  scene.add(sweepMesh);
+
+  // ---- glow sprite texture ----
+  function makeGlowTexture(){
+    const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(64,64,0,64,64,64);
+    g.addColorStop(0,'rgba(255,255,255,1)');
+    g.addColorStop(0.35,'rgba(255,255,255,0.55)');
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,128,128);
+    return new THREE.CanvasTexture(c);
+  }
+  const glowTex = makeGlowTexture();
+
+  // ---- hotspots ----
+  const hotspotData = [
+    { dir:[0.55,0.35,0.75], name:'Frontal Lobe', value:'92% activity', desc:'Focus, planning and decision-making regions are firing within a healthy range.' },
+    { dir:[0.12,0.55,0.82], name:'Motor Cortex', value:'Stable output', desc:'Voluntary movement signals show consistent, steady conduction.' },
+    { dir:[0.78,0.02,0.58], name:'Temporal Lobe', value:'88% recall', desc:'Memory encoding and language processing are within normal limits.' },
+    { dir:[0.30,-0.30,0.86], name:'Auditory Cortex', value:'Normal range', desc:'Sound localization and processing show no irregularities.' },
+    { dir:[0.02,-0.62,0.68], name:'Cerebellum', value:'Good balance', desc:'Coordination and fine motor timing are performing well.' },
+  ];
+
+  const hotspots = hotspotData.map((d, idx)=>{
+    const dirVec = new THREE.Vector3(d.dir[0], d.dir[1], d.dir[2]).normalize();
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:0xffffff, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+    sprite.position.copy(dirVec.clone().multiplyScalar(1.86));
+    sprite.scale.set(0.28,0.28,1);
+    sprite.userData = d;
+    brainGroup.add(sprite);
+
+    const dom = document.createElement('div');
+    dom.className = 'hotspot-dot';
+    hotspotLayer.appendChild(dom);
+    dom.addEventListener('click', (e)=>{ e.stopPropagation(); selectHotspot(idx); });
+
+    return { sprite, dom, data:d };
+  });
+
+  let selectedIdx = -1;
+  function selectHotspot(idx){
+    selectedIdx = idx;
+    hotspots.forEach((h,i)=> h.dom.classList.toggle('selected', i===idx));
+    const d = hotspots[idx].data;
+    regionPanel.name.textContent = d.name;
+    regionPanel.value.textContent = d.value;
+    regionPanel.desc.textContent = d.desc;
+  }
+
+  // ---- pointer / drag controls (rotate the brain group) ----
+  let dragging = false, lastX = 0, lastY = 0;
+  let rotY = 0.5, rotX = -0.12;
+  let autoRotate = true;
+
+  stage.addEventListener('pointerdown', (e)=>{
+    dragging = true; autoRotate = false; lastX = e.clientX; lastY = e.clientY;
+    stage.classList.add('dragging');
+  });
+  window.addEventListener('pointerup', ()=>{ dragging=false; stage.classList.remove('dragging'); });
+  window.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    rotY += dx*0.006;
+    rotX = Math.max(-0.7, Math.min(0.7, rotX + dy*0.006));
+  });
+  stage.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    camera.position.z = Math.max(4.4, Math.min(9, camera.position.z + e.deltaY*0.0035));
+  }, { passive:false });
+
+  // raycaster for hover cursor feedback
+  const raycaster = new THREE.Raycaster();
+  const mouseNDC = new THREE.Vector2();
+  stage.addEventListener('pointermove', (e)=>{
+    const rect = stage.getBoundingClientRect();
+    mouseNDC.x = ((e.clientX-rect.left)/rect.width)*2 - 1;
+    mouseNDC.y = -((e.clientY-rect.top)/rect.height)*2 + 1;
+  });
+
+  const clock = new THREE.Clock();
+  const tmpWorld = new THREE.Vector3();
+  const tmpProj = new THREE.Vector3();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    if(autoRotate) rotY += 0.0016;
+    brainGroup.rotation.y += (rotY - brainGroup.rotation.y) * 0.15;
+    brainGroup.rotation.x += (rotX - brainGroup.rotation.x) * 0.15;
+
+    ring.rotation.z += 0.0009;
+    sweepMesh.position.y = Math.sin(t*0.42) * 1.55;
+    sweepMat.opacity = 0.045 + 0.025*Math.sin(t*2.2);
+
+    hotspots.forEach((h,i)=>{
+      const s = 0.26 + Math.sin(t*2 + i*1.3) * 0.045;
+      h.sprite.scale.set(s,s,1);
+    });
+
+    renderer.render(scene, camera);
+
+    // project hotspots to screen space + occlusion test
+    const rect = stage.getBoundingClientRect();
+    hotspots.forEach(h=>{
+      h.sprite.getWorldPosition(tmpWorld);
+      tmpProj.copy(tmpWorld).project(camera);
+      const x = (tmpProj.x*0.5+0.5) * rect.width;
+      const y = (-tmpProj.y*0.5+0.5) * rect.height;
+      h.dom.style.left = x + 'px';
+      h.dom.style.top = y + 'px';
+
+      const dirToPoint = tmpWorld.clone().sub(camera.position).normalize();
+      const distToPoint = camera.position.distanceTo(tmpWorld);
+      raycaster.set(camera.position, dirToPoint);
+      const hits = raycaster.intersectObject(solidMesh);
+      const occluded = hits.length>0 && hits[0].distance < distToPoint - 0.06;
+      h.dom.style.opacity = occluded ? '0.12' : '1';
+      h.dom.style.pointerEvents = occluded ? 'none' : 'auto';
+    });
+  }
+  animate();
+
+  // default selection
+  selectHotspot(0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIFU·AI — Patient Intake</title>
+<meta name="description" content="High-Intensity Focused Ultrasound AI oncology system — patient intake and tumor localization.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6;
+    --panel:#ffffff;
+    --panel-soft:#f6f8fb;
+    --ink:#12151c;
+    --ink-soft:#5c6474;
+    --mute:#99a1b3;
+    --line:#e4e8f0;
+    --blue:#2b5cff;
+    --blue-deep:#1a3fc4;
+    --blue-mist:#e8effe;
+    --coral:#ff5f6d;
+    --amber:#ffb547;
+    --green:#22c55e;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --shadow:0 20px 45px -25px rgba(20,30,70,0.25);
+    --shadow-sm:0 8px 24px -14px rgba(20,30,70,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;font-family:'Inter',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  body{background:var(--bg);}
+
+  .app{
+    max-width:1540px;
+    margin:16px auto;
+    background:linear-gradient(180deg,#f7f9fc 0%,#eef1f6 100%);
+    border-radius:32px;
+    padding:20px 24px 24px;
+    box-shadow:var(--shadow);
+    display:grid;
+    grid-template-columns:76px 1fr 400px;
+    gap:20px;
+    height:calc(100vh - 32px);
+    overflow:hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar{display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:4px;}
+  .brand{
+    width:52px;height:52px;border-radius:16px;
+    background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-weight:700;font-size:18px;
+    position:relative;flex-shrink:0;
+  }
+  .brand sup{font-size:10px;position:absolute;top:8px;right:8px;color:rgba(255,255,255,0.6);}
+  .brand::after{
+    content:'+';position:absolute;top:-6px;right:-6px;
+    background:var(--blue);color:#fff;width:18px;height:18px;border-radius:50%;
+    font-size:11px;display:flex;align-items:center;justify-content:center;
+    font-family:'Inter';font-weight:700;
+  }
+  .nav{
+    display:flex;flex-direction:column;gap:8px;
+    background:#fff;padding:10px;border-radius:24px;
+    box-shadow:var(--shadow-sm);
+  }
+  .nav a{
+    width:48px;height:48px;border-radius:16px;border:none;
+    background:transparent;color:var(--mute);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all .2s ease;text-decoration:none;
+  }
+  .nav a svg{width:20px;height:20px;}
+  .nav a:hover{background:var(--blue-mist);color:var(--blue);}
+  .nav a.active{background:var(--blue);color:#fff;box-shadow:0 10px 20px -8px rgba(43,92,255,0.55);}
+  .nav-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px;}
+  .doc-avatar-sm{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,var(--blue),#6a8bff);
+    color:#fff;font-family:'Space Grotesk';font-weight:600;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow-sm);cursor:pointer;
+  }
+
+  /* ── MAIN ── */
+  .main{min-width:0;display:flex;flex-direction:column;gap:0;overflow-y:auto;padding-right:4px;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin-bottom:24px;
+  }
+  .topbar-left{}
+  .page-title{font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:-0.3px;line-height:1.1;}
+  .page-title span{color:var(--blue);}
+  .page-sub{font-size:13px;color:var(--mute);margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .status-live{
+    display:flex;align-items:center;gap:7px;
+    background:#fff;padding:8px 14px;border-radius:999px;
+    box-shadow:var(--shadow-sm);font-size:12px;font-weight:600;color:var(--green);
+    border:1px solid rgba(34,197,94,0.18);
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,0.2);animation:live-pulse 1.4s ease-in-out infinite;}
+  @keyframes live-pulse{0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,0.2);}50%{box-shadow:0 0 0 6px rgba(34,197,94,0.05);}}
+  .time-chip{
+    background:#fff;padding:8px 14px;border-radius:999px;
+    box-shadow:var(--shadow-sm);font-size:13px;font-family:'IBM Plex Mono';color:var(--ink-soft);
+  }
+  .icon-btn{
+    width:44px;height:44px;border-radius:50%;background:#fff;border:none;
+    display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;
+    box-shadow:var(--shadow-sm);color:var(--ink-soft);transition:all .2s;
+  }
+  .icon-btn:hover{background:var(--blue-mist);color:var(--blue);}
+  .icon-btn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--coral);border:2px solid #fff;}
+
+  /* section label */
+  .section-label{
+    display:flex;align-items:center;gap:8px;
+    font-family:'Space Grotesk';font-weight:600;font-size:15px;
+    margin:0 0 14px;color:var(--ink);
+  }
+  .section-label::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--blue);display:inline-block;flex-shrink:0;}
+
+  /* ── CARDS ── */
+  .card{
+    background:#fff;border-radius:var(--radius-lg);
+    padding:20px;box-shadow:0 14px 30px -22px rgba(20,30,70,0.3);
+    display:flex;flex-direction:column;gap:14px;
+    border:1px solid var(--line);
+  }
+  .card-head{display:flex;align-items:center;gap:12px;}
+  .card-icon{
+    width:42px;height:42px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--panel-soft);color:var(--ink-soft);flex-shrink:0;
+    border:1px solid var(--line);
+  }
+  .card-icon.on{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 8px 16px -6px rgba(43,92,255,0.45);}
+  .card-icon.red{background:#fff0f0;color:var(--coral);border-color:rgba(255,95,109,0.2);}
+  .card-icon svg{width:20px;height:20px;}
+  .card-title{font-size:12px;color:var(--ink-soft);font-weight:500;letter-spacing:0.01em;}
+  .card-badge{
+    font-family:'Space Grotesk';font-weight:700;font-size:15px;
+    color:var(--ink);margin-top:2px;
+  }
+
+  /* ── FORM ── */
+  .form-section{margin-bottom:24px;}
+  .step-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--blue-mist);color:var(--blue);
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
+    margin-left:auto;
+  }
+  .section-head{display:flex;align-items:center;margin-bottom:14px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .fg-full{grid-column:1/-1;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:0.06em;}
+  .field input,.field select,.field textarea{
+    height:42px;padding:0 14px;
+    border:1.5px solid var(--line);
+    border-radius:var(--radius-sm);
+    background:var(--panel-soft);
+    color:var(--ink);font-size:13.5px;font-weight:500;font-family:'Inter';
+    outline:none;transition:all .2s;width:100%;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--blue);background:#fff;
+    box-shadow:0 0 0 3px rgba(43,92,255,0.12);
+  }
+  .field input::placeholder,.field textarea::placeholder{color:var(--mute);font-weight:400;}
+  .field textarea{height:80px;padding:12px 14px;resize:vertical;line-height:1.5;}
+  select{cursor:pointer;}
+
+  .coord-block{
+    background:var(--panel-soft);border-radius:var(--radius-md);
+    padding:14px;border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .coord-label{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ink-soft);}
+  .coord-label svg{width:14px;height:14px;color:var(--blue);}
+  .coord-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .coord-inp{font-family:'IBM Plex Mono'!important;}
+
+  /* Step cards */
+  .step-card{
+    background:#fff;border-radius:var(--radius-lg);
+    padding:20px;box-shadow:0 14px 30px -22px rgba(20,30,70,0.28);
+    border:1px solid var(--line);margin-bottom:16px;
+  }
+  .step-card-head{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:18px;padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .step-icon{
+    width:36px;height:36px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:16px;
+  }
+  .step-icon.blue{background:var(--blue-mist);}
+  .step-icon.red{background:#fff0f0;}
+  .step-icon.green{background:#f0fdf4;}
+  .step-title{font-family:'Space Grotesk';font-weight:600;font-size:14px;color:var(--ink);}
+  .step-sub{font-size:11px;color:var(--mute);margin-top:1px;}
+
+  /* Launch button */
+  .btn-launch{
+    width:100%;padding:15px;border-radius:var(--radius-md);
+    background:var(--blue);color:#fff;
+    font-family:'Space Grotesk';font-weight:600;font-size:15px;
+    border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    transition:all .22s;margin-top:4px;
+    box-shadow:0 10px 28px -10px rgba(43,92,255,0.4);
+  }
+  .btn-launch:hover{background:var(--blue-deep);transform:translateY(-2px);box-shadow:0 16px 32px -12px rgba(43,92,255,0.5);}
+  .btn-launch:active{transform:translateY(0);}
+  .btn-launch svg{width:18px;height:18px;}
+
+  /* ── VITALS STRIP (3 mini-cards) ── */
+  .vitals-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+  .vital-card{
+    background:#fff;border-radius:var(--radius-md);
+    padding:16px 18px;box-shadow:var(--shadow-sm);
+    border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .vc-head{display:flex;align-items:center;gap:10px;}
+  .vc-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;}
+  .vc-label{font-size:11px;color:var(--ink-soft);font-weight:500;}
+  .vc-pct{font-family:'Space Grotesk';font-weight:700;font-size:14px;margin-top:1px;}
+  .vc-body{background:var(--panel-soft);border-radius:var(--radius-sm);overflow:hidden;}
+  /* temp */
+  .temp-body{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:relative;}
+  .temp-value{font-family:'Space Grotesk';font-weight:700;font-size:24px;z-index:1;}
+  .sun-rays{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:60px;height:60px;opacity:.4;}
+  /* bars */
+  .meter-body{display:flex;align-items:stretch;overflow:hidden;}
+  .meter-bars{flex:1;display:flex;align-items:center;justify-content:space-evenly;padding:0 12px;gap:4px;}
+  .bar{width:3px;border-radius:4px;background:var(--line);}
+  .bar.active{background:var(--blue);}
+  .meter-readout{
+    background:var(--blue);color:#fff;min-width:68px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono';font-weight:600;padding:10px 0;
+  }
+  .meter-readout .big{font-size:17px;}
+  .meter-readout .sm{font-size:9px;opacity:.75;}
+  /* wave */
+  .wave-body{display:flex;align-items:stretch;overflow:hidden;}
+  .wave-body svg{flex:1;padding:8px 6px;}
+
+  /* ── HR PANEL ── */
+  .hr-panel{
+    background:#fff;border-radius:var(--radius-lg);
+    padding:20px 22px 14px;
+    box-shadow:0 14px 30px -22px rgba(20,30,70,0.3);
+    border:1px solid var(--line);
+  }
+  .hr-top{display:flex;align-items:baseline;gap:10px;margin:4px 0 8px 46px;}
+  .hr-value{font-family:'Space Grotesk';font-weight:700;font-size:40px;}
+  .hr-unit{color:var(--ink-soft);font-size:12px;font-weight:500;}
+  #hrCanvasWrap{position:relative;}
+  #hrTooltip{
+    position:absolute;pointer-events:none;background:var(--ink);color:#fff;
+    padding:6px 10px;border-radius:10px;font-size:12px;font-family:'IBM Plex Mono';
+    transform:translate(-50%,-130%);opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5;
+  }
+
+  /* ── RIGHT: 3D Body Panel ── */
+  .body-panel{
+    position:relative;border-radius:var(--radius-lg);
+    background:radial-gradient(circle at 50% 20%,#ffffff 0%,#eef1f8 65%,#e6ebf5 100%);
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    height:100%;
+  }
+  .bp-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px 0;
+  }
+  .bp-head h3{font-family:'Space Grotesk';font-size:14px;margin:0;color:var(--ink-soft);font-weight:600;}
+  .bp-head .tag{
+    font-size:11px;color:var(--blue);background:var(--blue-mist);
+    padding:5px 11px;border-radius:999px;font-weight:600;
+  }
+  .bp-view-row{display:flex;align-items:center;gap:6px;padding:10px 20px 0;}
+  .view-btn{
+    padding:5px 12px;border-radius:999px;font-size:11px;font-weight:600;
+    background:var(--panel-soft);color:var(--mute);border:1px solid var(--line);
+    cursor:pointer;transition:all .18s;
+  }
+  .view-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 6px 14px -6px rgba(43,92,255,0.4);}
+  #three-container{flex:1;position:relative;cursor:grab;min-height:200px;}
+  #three-container:active{cursor:grabbing;}
+  #three-container canvas{display:block!important;width:100%!important;height:100%!important;}
+  .drag-hint{
+    position:absolute;left:18px;bottom:14px;font-size:11px;color:var(--mute);
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.75);padding:5px 10px;border-radius:999px;
+    backdrop-filter:blur(4px);border:1px solid var(--line);
+  }
+  .hotspot-label{
+    position:absolute;transform:translate(-50%,-140%);
+    background:#fff;border-radius:12px;padding:8px 12px;
+    font-size:12px;box-shadow:0 12px 24px -10px rgba(20,30,70,0.4);
+    pointer-events:none;opacity:0;transition:opacity .15s,transform .15s;
+    white-space:nowrap;border:1px solid var(--line);z-index:10;
+  }
+  .hotspot-label b{font-family:'IBM Plex Mono';color:var(--blue);}
+  .hotspot-label.show{opacity:1;transform:translate(-50%,-160%);}
+
+  /* Body stats strip */
+  .body-stats{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    padding:12px 16px;border-top:1px solid var(--line);
+    background:rgba(255,255,255,0.8);backdrop-filter:blur(6px);
+  }
+  .bs-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .bs-label{font-size:10px;color:var(--mute);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+  .bs-val{font-family:'Space Grotesk';font-size:13px;font-weight:700;color:var(--ink);}
+  .bs-val.warn{color:var(--amber);}
+  .bs-val.danger{color:var(--coral);}
+
+  /* Oxygen card */
+  .oxygen-card{
+    position:absolute;right:16px;bottom:72px;
+    background:#fff;border-radius:var(--radius-md);
+    padding:14px 16px;width:200px;
+    box-shadow:0 16px 34px -18px rgba(20,30,70,0.4);
+    border:1px solid var(--line);
+  }
+  .oxy-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .oxy-top span{font-size:11px;color:var(--ink-soft);display:block;}
+  .oxy-top b{font-family:'Space Grotesk';font-size:17px;}
+  .oxy-bars{display:flex;align-items:flex-end;gap:5px;height:30px;}
+  .oxy-bars i{flex:1;background:var(--blue);border-radius:3px;opacity:.85;}
+
+  @media(max-width:1200px){.app{grid-template-columns:76px 1fr;}.body-panel{display:none;}}
+  @media(max-width:760px){.app{grid-template-columns:1fr;padding:14px;margin:10px;border-radius:22px;}.sidebar{display:none;}.vitals-strip{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="brand">H<sup>AI</sup></div>
+    <div class="nav">
+      <a href="index.html" class="active" title="Patient">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+      <a href="machine.html" title="Console">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 9h2l2-4 2 7 2-3 1 3h1"/></svg>
+      </a>
+      <a href="#" title="History">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+      </a>
+      <a href="#" title="Analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </a>
+    </div>
+    <div class="nav nav-bottom">
+      <a href="#" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </a>
+      <div class="doc-avatar-sm" title="Dr. Ahmed Hassan">AH</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="page-title">Patient Intake <span>&mdash; New Session</span></div>
+        <div class="page-sub">HIFU·AI Oncology System · Patient Registration</div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-live"><span class="live-dot"></span>System Online</div>
+        <div class="time-chip" id="timeDisplay">--:--:--</div>
+        <button class="icon-btn" title="Notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="dot"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Vitals strip -->
+    <div class="vitals-strip">
+      <!-- Temperature -->
+      <div class="vital-card">
+        <div class="vc-head">
+          <div class="vc-icon" style="background:#fff7ed;">🌡️</div>
+          <div><div class="vc-label">Temperature</div><div class="vc-pct" id="tempPct">1.6%</div></div>
+        </div>
+        <div class="vc-body">
+          <div class="temp-body">
+            <div class="temp-value" id="tempValue">36.6°</div>
+            <svg class="sun-rays" viewBox="0 0 100 100"><g stroke="#c7d0e0" stroke-width="3" stroke-linecap="round">
+              <line x1="50" y1="10" x2="50" y2="25"/><line x1="50" y1="75" x2="50" y2="90"/>
+              <line x1="10" y1="50" x2="25" y2="50"/><line x1="75" y1="50" x2="90" y2="50"/>
+              <line x1="21" y1="21" x2="31" y2="31"/><line x1="69" y1="69" x2="79" y2="79"/>
+              <line x1="79" y1="21" x2="69" y2="31"/><line x1="31" y1="69" x2="21" y2="79"/>
+            </g></svg>
+          </div>
+        </div>
+      </div>
+      <!-- Blood Sugar -->
+      <div class="vital-card">
+        <div class="vc-head">
+          <div class="vc-icon" style="background:var(--blue);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          </div>
+          <div><div class="vc-label">Blood Sugar</div><div class="vc-pct" id="sugarPct">2.3%</div></div>
+        </div>
+        <div class="vc-body">
+          <div class="meter-body">
+            <div class="meter-bars" id="sugarBars"></div>
+            <div class="meter-readout"><div class="big" id="sugarValue">120</div><div class="sm">/160</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Blood Pressure -->
+      <div class="vital-card">
+        <div class="vc-head">
+          <div class="vc-icon" style="background:var(--blue);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/></svg>
+          </div>
+          <div><div class="vc-label">Blood Pressure</div><div class="vc-pct" id="bpPct">0.4%</div></div>
+        </div>
+        <div class="vc-body">
+          <div class="wave-body">
+            <svg viewBox="0 0 200 60" preserveAspectRatio="none"><polyline id="bpWave" points="" fill="none" stroke="#2b5cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="meter-readout"><div class="big" id="bpValue">80</div><div class="sm">/120</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Patient Info -->
+    <div class="step-card">
+      <div class="step-card-head">
+        <div class="step-icon blue">👤</div>
+        <div><div class="step-title">Patient Information</div><div class="step-sub">Basic demographics and identification</div></div>
+        <div class="step-badge" style="margin-left:auto;">Step 1 of 3</div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="patientName" placeholder="e.g. Michael Robertson">
+        </div>
+        <div class="field">
+          <label>Patient ID</label>
+          <input type="text" id="patientId" value="PT-2024-0011">
+        </div>
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="patientAge" placeholder="Years" min="1" max="120">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="patientGender">
+            <option value="">Select</option>
+            <option>Male</option><option>Female</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="patientWeight" placeholder="kg">
+        </div>
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="patientHeight" placeholder="cm">
+        </div>
+        <div class="field fg-full">
+          <label>Attending Physician</label>
+          <input type="text" id="doctorName" value="Dr. Ahmed Hassan">
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Tumor Profile -->
+    <div class="step-card">
+      <div class="step-card-head">
+        <div class="step-icon red">🔬</div>
+        <div><div class="step-title">Tumor Profile</div><div class="step-sub">Pathology and 3D coordinates</div></div>
+        <div class="step-badge" style="margin-left:auto;background:#fff0f0;color:var(--coral);">Step 2 of 3</div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Tumor Type</label>
+          <select id="tumorType">
+            <option value="">Select type</option>
+            <option>Hepatocellular Carcinoma</option>
+            <option>Breast Carcinoma</option>
+            <option>Prostate Adenocarcinoma</option>
+            <option>Pancreatic Ductal Carcinoma</option>
+            <option>Renal Cell Carcinoma</option>
+            <option>Brain Glioblastoma</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Stage</label>
+          <select id="tumorStage">
+            <option>Stage I</option><option>Stage II</option>
+            <option selected>Stage III</option><option>Stage IV</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Diameter (mm)</label>
+          <input type="number" id="tumorSize" value="24">
+        </div>
+        <div class="field">
+          <label>Depth from surface (mm)</label>
+          <input type="number" id="tumorDepth" value="45">
+        </div>
+      </div>
+      <div class="coord-block" style="margin-top:14px;">
+        <div class="coord-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>
+          3D Tumor Coordinates (cm from body centroid)
+        </div>
+        <div class="coord-row">
+          <div class="field"><label>X — Coronal</label><input class="coord-inp" type="number" id="coordX" step="0.1" value="-2.3"></div>
+          <div class="field"><label>Y — Vertical</label><input class="coord-inp" type="number" id="coordY" step="0.1" value="1.5"></div>
+          <div class="field"><label>Z — Depth</label><input class="coord-inp" type="number" id="coordZ" step="0.1" value="4.5"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: HIFU Params -->
+    <div class="step-card">
+      <div class="step-card-head">
+        <div class="step-icon green">⚡</div>
+        <div><div class="step-title">HIFU Session Parameters</div><div class="step-sub">Frequency, intensity and treatment duration</div></div>
+        <div class="step-badge" style="margin-left:auto;background:#f0fdf4;color:var(--green);">Step 3 of 3</div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Frequency (MHz)</label>
+          <input type="number" id="freq" step="0.1" value="1.1">
+        </div>
+        <div class="field">
+          <label>Intensity (W/cm²)</label>
+          <input type="number" id="intensity" value="1500">
+        </div>
+        <div class="field">
+          <label>Duty Cycle (%)</label>
+          <input type="number" id="dutyCycle" value="80" min="10" max="100">
+        </div>
+        <div class="field">
+          <label>Duration (min)</label>
+          <input type="number" id="sessionDuration" value="45">
+        </div>
+        <div class="field fg-full">
+          <label>Clinical Notes</label>
+          <textarea id="clinicalNotes" placeholder="Additional observations, contraindications, patient condition…"></textarea>
+        </div>
+      </div>
+      <button class="btn-launch" id="launchBtn" onclick="launchSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Launch Treatment Session →
+      </button>
+    </div>
+
+    <!-- Heart Rate -->
+    <div class="section-label">Heart Rate Monitor</div>
+    <div class="hr-panel">
+      <div class="hr-top"><span class="hr-value" id="hrBig">92</span><span class="hr-unit">Avg bpm</span></div>
+      <div id="hrCanvasWrap">
+        <canvas id="hrCanvas" height="180"></canvas>
+        <div id="hrTooltip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: 3D Body Panel -->
+  <div class="body-panel">
+    <div class="bp-head">
+      <h3>Tumor Localization · Live</h3>
+      <span class="tag" id="scanTag">GLB Model</span>
+    </div>
+    <div class="bp-view-row">
+      <button class="view-btn active" id="vFront" onclick="setView('front')">Front</button>
+      <button class="view-btn" id="vSide" onclick="setView('side')">Side</button>
+      <button class="view-btn" id="vTop" onclick="setView('top')">Top</button>
+    </div>
+    <div id="three-container">
+      <div class="hotspot-label" id="hotLabel"></div>
+    </div>
+    <div class="drag-hint">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+      drag · zoom · click a point
+    </div>
+    <div class="body-stats">
+      <div class="bs-item"><div class="bs-label">Location</div><div class="bs-val" id="bsLocation">—</div></div>
+      <div class="bs-item"><div class="bs-label">Tumor Ø</div><div class="bs-val" id="bsSize">24 mm</div></div>
+      <div class="bs-item"><div class="bs-label">Depth</div><div class="bs-val" id="bsDepth">45 mm</div></div>
+      <div class="bs-item"><div class="bs-label">Risk</div><div class="bs-val warn" id="bsRisk">Medium</div></div>
+    </div>
+    <div class="oxygen-card">
+      <div class="oxy-top">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <path stroke="#e4e8f0" stroke-width="4" fill="none" d="M18 2 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32"/>
+          <path id="oxyRing" stroke="#2b5cff" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="70,100" d="M18 2 a16 16 0 1 1 0 32 a16 16 0 1 1 0 -32"/>
+        </svg>
+        <span>Oxygen Level<br><b id="oxyValue">95%</b></span>
+      </div>
+      <div class="oxy-bars" id="oxyBars"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ── Time ── */
+function updateTime(){ document.getElementById('timeDisplay').textContent = new Date().toLocaleTimeString('en-US',{hour12:false}); }
+updateTime(); setInterval(updateTime,1000);
+
+/* ── Vitals simulation ── */
+const state = { temp:36.6, sugar:120, sysBP:120, diaBP:80, oxygen:95, hr:92 };
+function jitter(v,amt,min,max){ return Math.max(min,Math.min(max,v+(Math.random()-.5)*amt)); }
+
+function renderBars(container,count,activeIdx){
+  container.innerHTML='';
+  for(let i=0;i<count;i++){
+    const b=document.createElement('div');
+    b.className='bar'+(i===activeIdx?' active':'');
+    b.style.height=(10+Math.random()*22)+'px';
+    container.appendChild(b);
+  }
+}
+renderBars(document.getElementById('sugarBars'),14,10);
+
+function drawBPWave(){
+  const pts=[]; const w=200,h=60,mid=30;
+  for(let x=0;x<=w;x+=4){
+    const t=x/10;
+    const y=mid-Math.sin(t)*10*Math.exp(-Math.pow((t%6)-1,2)/2)-(Math.random()-.5)*2;
+    pts.push(`${x},${y.toFixed(1)}`);
+  }
+  document.getElementById('bpWave').setAttribute('points',pts.join(' '));
+}
+drawBPWave();
+
+function renderOxyBars(){
+  const el=document.getElementById('oxyBars'); el.innerHTML='';
+  [60,90,45,100,70].forEach(h=>{ const i=document.createElement('i'); i.style.height=h+'%'; el.appendChild(i); });
+}
+renderOxyBars();
+
+function updateOxyRing(pct){ document.getElementById('oxyRing').setAttribute('stroke-dasharray',`${pct},100`); }
+updateOxyRing(state.oxygen);
+
+function tickVitals(){
+  state.temp=jitter(state.temp,.15,35.8,37.6);
+  state.sugar=jitter(state.sugar,4,80,160);
+  state.sysBP=jitter(state.sysBP,3,100,140);
+  state.diaBP=jitter(state.diaBP,2,65,95);
+  state.oxygen=jitter(state.oxygen,1,92,99);
+  document.getElementById('tempValue').textContent=state.temp.toFixed(1)+'°';
+  document.getElementById('sugarValue').textContent=Math.round(state.sugar);
+  document.getElementById('bpValue').textContent=Math.round(state.diaBP);
+  document.getElementById('oxyValue').textContent=Math.round(state.oxygen)+'%';
+  updateOxyRing(Math.round(state.oxygen));
+  renderOxyBars();
+  renderBars(document.getElementById('sugarBars'),14,Math.floor(Math.random()*14));
+  drawBPWave();
+  document.getElementById('tempPct').textContent=(Math.random()*2+0.8).toFixed(1)+'%';
+  document.getElementById('sugarPct').textContent=(Math.random()*3+1).toFixed(1)+'%';
+  document.getElementById('bpPct').textContent=(Math.random()*.8+0.2).toFixed(1)+'%';
+}
+setInterval(tickVitals,3200);
+
+/* ── Heart Rate Chart ── */
+const hrLabels=['9:00','9:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00'];
+let hrData=[95,82,70,64,78,88,95,72,58,52,60,84,78];
+const hrCanvas=document.getElementById('hrCanvas');
+const hrCtx=hrCanvas.getContext('2d');
+const hrTooltip=document.getElementById('hrTooltip');
+let hoverIdx=-1;
+
+function resizeHrCanvas(){
+  const wrap=document.getElementById('hrCanvasWrap');
+  hrCanvas.width=wrap.clientWidth*devicePixelRatio;
+  hrCanvas.height=180*devicePixelRatio;
+  hrCanvas.style.width=wrap.clientWidth+'px';
+  hrCanvas.style.height='180px';
+  drawHR();
+}
+
+function drawHR(){
+  const W=hrCanvas.width,H=hrCanvas.height;
+  hrCtx.clearRect(0,0,W,H);
+  hrCtx.save(); hrCtx.scale(devicePixelRatio,devicePixelRatio);
+  const w=W/devicePixelRatio,h=H/devicePixelRatio;
+  const pL=40,pR=10,pT=10,pB=26,plotW=w-pL-pR,plotH=h-pT-pB;
+  const minV=50,maxV=125;
+  hrCtx.strokeStyle='#eef0f5'; hrCtx.fillStyle='#99a1b3'; hrCtx.font='11px Inter'; hrCtx.textAlign='right';
+  [60,80,100,120].forEach(v=>{
+    const y=pT+plotH-((v-minV)/(maxV-minV))*plotH;
+    hrCtx.beginPath(); hrCtx.moveTo(pL,y); hrCtx.lineTo(w-pR,y); hrCtx.stroke();
+    hrCtx.fillText(v,pL-8,y+4);
+  });
+  const n=hrData.length; const stepX=plotW/(n-1||1); const barW=7;
+  hrData.forEach((v,i)=>{
+    const x=pL+i*stepX;
+    const yTop=pT+plotH-((v-minV)/(maxV-minV))*plotH;
+    const yBase=pT+plotH;
+    const isHov=i===hoverIdx;
+    hrCtx.strokeStyle=isHov?'#2b5cff':(v>85?'#2b5cff':'#d8dee9');
+    hrCtx.lineWidth=barW; hrCtx.lineCap='round';
+    hrCtx.beginPath(); hrCtx.moveTo(x,yBase); hrCtx.lineTo(x,yTop); hrCtx.stroke();
+    if(isHov){ hrCtx.beginPath(); hrCtx.fillStyle='#2b5cff'; hrCtx.arc(x,yTop,5,0,Math.PI*2); hrCtx.fill(); }
+  });
+  hrCtx.textAlign='center'; hrCtx.fillStyle='#99a1b3';
+  hrLabels.forEach((l,i)=>{ if(i%2!==0) return; hrCtx.fillText(l,pL+i*stepX,h-6); });
+  hrCtx.restore();
+}
+
+hrCanvas.addEventListener('mousemove',(e)=>{
+  const rect=hrCanvas.getBoundingClientRect(); const x=e.clientX-rect.left;
+  const wrap=document.getElementById('hrCanvasWrap');
+  const pL=40,pR=10,plotW=wrap.clientWidth-pL-pR;
+  const stepX=plotW/(hrData.length-1);
+  const i=Math.max(0,Math.min(hrData.length-1,Math.round((x-pL)/stepX)));
+  if(i!==hoverIdx){ hoverIdx=i; drawHR(); }
+  hrTooltip.style.left=(pL+i*stepX)+'px'; hrTooltip.style.top='0px';
+  hrTooltip.textContent=`${hrLabels[i]} · ${hrData[i]} bpm`; hrTooltip.style.opacity=1;
+});
+hrCanvas.addEventListener('mouseleave',()=>{ hoverIdx=-1; hrTooltip.style.opacity=0; drawHR(); });
+window.addEventListener('resize',resizeHrCanvas);
+resizeHrCanvas();
+setInterval(()=>{
+  hrData.shift(); const last=hrData[hrData.length-1];
+  hrData.push(Math.max(52,Math.min(120,Math.round(jitter(last,14,52,120)))));
+  document.getElementById('hrBig').textContent=Math.round(hrData.reduce((a,b)=>a+b,0)/hrData.length);
+  drawHR();
+},2600);
+
+/* ── 3D Body with GLB ── */
+const container = document.getElementById('three-container');
+const scene3 = new THREE.Scene();
+const camera3 = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+camera3.position.set(0, 0.5, 11);
+
+const renderer3 = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer3.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer3.shadowMap.enabled = true;
+container.appendChild(renderer3.domElement);
+
+scene3.add(new THREE.AmbientLight(0xffffff, 0.7));
+const key3 = new THREE.DirectionalLight(0xffffff, 0.9); key3.position.set(3,5,4); scene3.add(key3);
+const rim3 = new THREE.DirectionalLight(0x8fb0ff, 0.5); rim3.position.set(-4,2,-3); scene3.add(rim3);
+const fill3 = new THREE.PointLight(0x4466ff, 0.3, 20); fill3.position.set(0,2,3); scene3.add(fill3);
+
+let bodyGroup = new THREE.Group();
+scene3.add(bodyGroup);
+
+let tumorDot, tumorGlow, pulseRings=[];
+
+/* Load GLB */
+function loadGLTF(url, onLoad){
+  const loader = new THREE.FileLoader(); loader.setResponseType('arraybuffer');
+  loader.load(url, (buffer)=>{
+    // Parse GLB manually using Three.js r128 GLTFLoader via CDN
+    onLoad(buffer);
+  });
+}
+
+/* Use GLTFLoader from CDN */
+const gltfScript = document.createElement('script');
+gltfScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+gltfScript.onload = () => {
+  const loader = new THREE.GLTFLoader();
+  loader.load(
+    'body model/human_body.glb',
+    (gltf) => {
+      const model = gltf.scene;
+      // Fit model to view
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 3.2 / maxDim;
+      model.scale.setScalar(scale);
+      model.position.sub(center.multiplyScalar(scale));
+
+      // Apply soft material
+      model.traverse(child => {
+        if(child.isMesh){
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0xdce2ee, roughness: 0.5, metalness: 0.05,
+          });
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      bodyGroup.add(model);
+      document.getElementById('scanTag').textContent = 'GLB · Live';
+      addHotspots();
+    },
+    (xhr) => {
+      const pct = Math.round(xhr.loaded/xhr.total*100);
+      document.getElementById('scanTag').textContent = `Loading ${pct}%`;
+    },
+    (err) => {
+      console.warn('GLB load error, using procedural fallback', err);
+      buildProceduralBody();
+      addHotspots();
+    }
+  );
+};
+document.head.appendChild(gltfScript);
+
+function buildProceduralBody(){
+  const skinMat = new THREE.MeshStandardMaterial({color:0xdfe4ee,roughness:0.5,metalness:0.05});
+  const skinMat2 = new THREE.MeshStandardMaterial({color:0xd3d9e6,roughness:0.6,metalness:0.05});
+  function limb(rT,rB,len,mat){
+    const g=new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(rT,rB,len,20),mat));
+    const sT=new THREE.Mesh(new THREE.SphereGeometry(rT,20,20),mat); sT.position.y=len/2; g.add(sT);
+    const sB=new THREE.Mesh(new THREE.SphereGeometry(rB,20,20),mat); sB.position.y=-len/2; g.add(sB);
+    return g;
+  }
+  const fig=new THREE.Group();
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.62,32,32),skinMat); head.position.y=3.05; head.scale.set(0.86,1.05,0.92); fig.add(head);
+  const nk=limb(0.22,0.26,.35,skinMat2); nk.position.y=2.55; fig.add(nk);
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.46,1.9,24),skinMat); torso.position.y=1.5; fig.add(torso);
+  const chest=new THREE.Mesh(new THREE.SphereGeometry(0.66,24,24),skinMat); chest.position.y=2.25; chest.scale.set(1,.7,.8); fig.add(chest);
+  const pelvis=new THREE.Mesh(new THREE.SphereGeometry(0.5,24,24),skinMat2); pelvis.position.y=.55; pelvis.scale.set(1.05,.6,.8); fig.add(pelvis);
+  [1,-1].forEach(s=>{
+    const arm=limb(0.16,0.13,1.55,skinMat2); arm.position.set(s*.86,1.75,0); arm.rotation.z=s*.22; fig.add(arm);
+    const fore=limb(0.13,0.11,1.35,skinMat2); fore.position.set(s*1.22,.55,.05); fore.rotation.z=s*.1; fig.add(fore);
+    const leg=limb(0.24,0.17,1.9,skinMat); leg.position.set(s*.32,-1,0); fig.add(leg);
+    const shin=limb(0.17,0.12,1.7,skinMat); shin.position.set(s*.32,-2.75,.05); fig.add(shin);
+  });
+  fig.scale.setScalar(0.85); fig.position.y=-0.2;
+  bodyGroup.add(fig);
+}
+
+function addHotspots(){
+  // Tumor marker
+  const x=parseFloat(document.getElementById('coordX').value)*0.1||0;
+  const y=parseFloat(document.getElementById('coordY').value)*0.1||0;
+  const z=parseFloat(document.getElementById('coordZ').value)*0.05||0;
+  const sz=Math.max(0.08,parseFloat(document.getElementById('tumorSize').value)*0.004);
+  placeTumor(x,y,z,sz);
+
+  // Body hotspots
+  const pulseMat = new THREE.MeshBasicMaterial({color:0x2b5cff});
+  const hotDefs = [
+    {pos:new THREE.Vector3(0.55,1.95,0.62),label:'Chest',val:()=>`SpO₂ ${Math.round(state.oxygen)}%`},
+    {pos:new THREE.Vector3(0,1.15,0.62),label:'Abdomen',val:()=>`Core ${state.temp.toFixed(1)}°C`},
+    {pos:new THREE.Vector3(-0.5,0.65,0.5),label:'Left Hip',val:()=>`BP ${Math.round(state.sysBP)}/${Math.round(state.diaBP)}`},
+  ];
+  hotDefs.forEach(d=>{
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,16,16),pulseMat); m.position.copy(d.pos); m.userData=d;
+    const ring=new THREE.Mesh(new THREE.RingGeometry(0.09,0.13,24),new THREE.MeshBasicMaterial({color:0x2b5cff,transparent:true,opacity:0.35,side:THREE.DoubleSide}));
+    ring.position.copy(d.pos); d.ring=ring;
+    bodyGroup.add(m); bodyGroup.add(ring);
+    d.mesh=m; hotspotMeshes.push(m);
+  });
+  window._hotDefs=hotDefs;
+}
+
+function placeTumor(x,y,z,sz){
+  if(tumorDot) bodyGroup.remove(tumorDot);
+  if(tumorGlow) bodyGroup.remove(tumorGlow);
+  pulseRings.forEach(r=>bodyGroup.remove(r)); pulseRings=[];
+
+  const tGeo=new THREE.SphereGeometry(sz,24,24);
+  const tMat=new THREE.MeshStandardMaterial({color:0xcc2200,emissive:0xff1100,emissiveIntensity:0.4,roughness:0.3,transparent:true,opacity:0.9});
+  tumorDot=new THREE.Mesh(tGeo,tMat); tumorDot.position.set(x,y,z); bodyGroup.add(tumorDot);
+
+  const gGeo=new THREE.SphereGeometry(sz*2,24,24);
+  const gMat=new THREE.MeshBasicMaterial({color:0xff3300,transparent:true,opacity:0.1,side:THREE.BackSide});
+  tumorGlow=new THREE.Mesh(gGeo,gMat); tumorGlow.position.set(x,y,z); bodyGroup.add(tumorGlow);
+
+  for(let i=0;i<3;i++){
+    const rGeo=new THREE.RingGeometry(sz*(1.4+i*.4),sz*(1.55+i*.4),32);
+    const rMat=new THREE.MeshBasicMaterial({color:0x2b5cff,transparent:true,opacity:0.2-i*.05,side:THREE.DoubleSide});
+    const ring=new THREE.Mesh(rGeo,rMat); ring.position.set(x,y,z); ring.userData.i=i;
+    bodyGroup.add(ring); pulseRings.push(ring);
+  }
+}
+
+const hotspotMeshes=[];
+const raycaster3=new THREE.Raycaster();
+const mouse3=new THREE.Vector2();
+const hotLabel=document.getElementById('hotLabel');
+let activeHot=null;
+
+container.addEventListener('click',(e)=>{
+  if(isDragging3) return;
+  const rect=container.getBoundingClientRect();
+  mouse3.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse3.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster3.setFromCamera(mouse3,camera3);
+  const hits=raycaster3.intersectObjects(hotspotMeshes);
+  if(hits.length){
+    activeHot=hits[0].object.userData;
+    activeHot.hitMesh=hits[0].object;
+    showHotLabel(activeHot);
+  } else {
+    hotLabel.classList.remove('show'); activeHot=null;
+  }
+});
+
+function showHotLabel(d){
+  if(!d.hitMesh) return;
+  const wp=new THREE.Vector3(); d.hitMesh.getWorldPosition(wp);
+  const v=wp.clone().project(camera3);
+  const rect=container.getBoundingClientRect();
+  hotLabel.style.left=((v.x*.5+.5)*rect.width)+'px';
+  hotLabel.style.top=((-v.y*.5+.5)*rect.height)+'px';
+  hotLabel.innerHTML=`<b>${d.label}</b><br>${d.val()}`;
+  hotLabel.classList.add('show');
+}
+
+/* Drag */
+let isDragging3=false,prevX3=0,targetRotY3=0.35,curRotY3=0.35;
+container.addEventListener('pointerdown',(e)=>{ isDragging3=true; prevX3=e.clientX; });
+window.addEventListener('pointerup',()=>{ isDragging3=false; });
+window.addEventListener('pointermove',(e)=>{ if(!isDragging3) return; targetRotY3+=(e.clientX-prevX3)*0.006; prevX3=e.clientX; });
+
+/* Camera view */
+let targetCamPos={x:0,y:0.5,z:11};
+function setView(v){
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('v'+v.charAt(0).toUpperCase()+v.slice(1)).classList.add('active');
+  if(v==='front') targetCamPos={x:0,y:0.5,z:11};
+  else if(v==='side') targetCamPos={x:11,y:0.5,z:0};
+  else if(v==='top') targetCamPos={x:0,y:11,z:0.01};
+}
+
+function resizeThree(){
+  const w=container.clientWidth,h=container.clientHeight;
+  camera3.aspect=w/h; camera3.updateProjectionMatrix(); renderer3.setSize(w,h);
+}
+window.addEventListener('resize',resizeThree);
+
+let t3=0;
+function animate3(){
+  requestAnimationFrame(animate3); t3+=0.016;
+  curRotY3+=(targetRotY3-curRotY3)*.08;
+  if(!isDragging3) targetRotY3+=0.0018;
+  bodyGroup.rotation.y=curRotY3;
+
+  // smooth camera
+  camera3.position.x+=(targetCamPos.x-camera3.position.x)*.07;
+  camera3.position.y+=(targetCamPos.y-camera3.position.y)*.07;
+  camera3.position.z+=(targetCamPos.z-camera3.position.z)*.07;
+  camera3.lookAt(0,0,0);
+
+  if(tumorDot){ const s=1+.08*Math.sin(t3*3); tumorDot.scale.setScalar(s); if(tumorGlow) tumorGlow.scale.setScalar(s*1.1); }
+  pulseRings.forEach((r,i)=>{
+    const s=1+.15*Math.sin(t3*2+r.userData.i*.7);
+    r.scale.setScalar(s); r.material.opacity=.15+.1*Math.sin(t3*2+i);
+    r.lookAt(camera3.position);
+  });
+  if(window._hotDefs) window._hotDefs.forEach((d,i)=>{ if(d.ring){ d.ring.lookAt(camera3.position); d.ring.scale.setScalar(1+.12*Math.sin(t3*3+i)); } });
+  if(activeHot&&activeHot.hitMesh) showHotLabel(activeHot);
+  renderer3.render(scene3,camera3);
+}
+animate3(); resizeThree();
+
+/* Coord update */
+['coordX','coordY','coordZ','tumorSize'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    const x=parseFloat(document.getElementById('coordX').value)*.1||0;
+    const y=parseFloat(document.getElementById('coordY').value)*.1||0;
+    const z=parseFloat(document.getElementById('coordZ').value)*.05||0;
+    const sz=Math.max(0.08,parseFloat(document.getElementById('tumorSize').value)*.004);
+    placeTumor(x,y,z,sz);
+    document.getElementById('bsSize').textContent=document.getElementById('tumorSize').value+' mm';
+    document.getElementById('bsDepth').textContent=document.getElementById('tumorDepth').value+' mm';
+  });
+});
+document.getElementById('tumorType').addEventListener('change',()=>{
+  const map={'Hepatocellular Carcinoma':'Liver — Right Lobe','Breast Carcinoma':'Breast — Upper Outer','Prostate Adenocarcinoma':'Prostate','Pancreatic Ductal Carcinoma':'Pancreas — Head','Renal Cell Carcinoma':'Kidney — Left','Brain Glioblastoma':'Brain — Frontal'};
+  document.getElementById('bsLocation').textContent=map[document.getElementById('tumorType').value]||'—';
+  const sz=parseFloat(document.getElementById('tumorSize').value)||0;
+  const rEl=document.getElementById('bsRisk');
+  if(sz>40){rEl.textContent='High';rEl.className='bs-val danger';}
+  else if(sz>20){rEl.textContent='Medium';rEl.className='bs-val warn';}
+  else{rEl.textContent='Low';rEl.className='bs-val';}
+});
+
+/* Launch */
+function launchSession(){
+  const name=document.getElementById('patientName').value.trim();
+  const type=document.getElementById('tumorType').value;
+  if(!name){ highlight('patientName'); return; }
+  if(!type){ highlight('tumorType'); return; }
+  const params={
+    name,id:document.getElementById('patientId').value,
+    doc:document.getElementById('doctorName').value,
+    type,size:document.getElementById('tumorSize').value,
+    depth:document.getElementById('tumorDepth').value,
+    freq:document.getElementById('freq').value,
+    inten:document.getElementById('intensity').value,
+    duty:document.getElementById('dutyCycle').value,
+    dur:document.getElementById('sessionDuration').value,
+    x:document.getElementById('coordX').value,
+    y:document.getElementById('coordY').value,
+    z:document.getElementById('coordZ').value,
+  };
+  localStorage.setItem('hifuSession',JSON.stringify(params));
+  const btn=document.getElementById('launchBtn');
+  btn.textContent='Preparing Session…'; btn.disabled=true; btn.style.opacity='.75';
+  setTimeout(()=>{ window.location.href='machine.html'; },700);
+}
+function highlight(id){
+  const el=document.getElementById(id); el.focus();
+  el.style.borderColor='var(--coral)'; el.style.boxShadow='0 0 0 3px rgba(255,95,109,0.15)';
+  setTimeout(()=>{ el.style.borderColor=''; el.style.boxShadow=''; },2000);
+}
+</script>
+</body>
+</html>
