@@ -130,22 +130,5 @@ python3 run_closed_loop_on_dataset.py --case-id Cage01_BL --max-slices 8 --slice
 `run_closed_loop_on_dataset.py` replays a sequence of real ultrasound slices through the existing controller, logging control commands and saving summary plots.
  
 The existing synthetic closed-loop demo remains unchanged, but these helpers demonstrate the first real-data integration path. Note that the paper's reference segmentation stack (3D U-Net / Swin-UNETR, trained on BraTS-style four-modality MRI) targets brain tumor segmentation; the uploaded pre-clinical ultrasound dataset used here is a different imaging modality and tumor type, so `train_ultrasound_segmentation.py` / `train_ultrasound_unet.py` should be read as validating the *control-loop integration path* against real volumetric ultrasound data, not as a drop-in BraTS-equivalent model.
- 
-## How this maps onto your real project
- 
-| Prototype piece | Real-world replacement |
-|---|---|
-| `SyntheticTumorPatient.generate_frame()` | Live ultrasound transducer feed (ultrafast plane-wave compounding) or interleaved fast-MRI thermometry, or dataset frames for offline validation |
-| `detection.py` thresholding | A 3D segmentation network (3D U-Net / Swin-UNETR family) trained on **BraTS**-style multi-modal MRI, or your own **Mendeley** / **BUSI (Kaggle)** ultrasound datasets, run as a two-tier scheme: a high-accuracy network anchors the boundary periodically, and a lightweight MeshNet-class network (à la Brainchop) tracks it between anchor points at interactive speed |
-| `apply_energy()`'s made-up shrink rate | A validated thermal dose model (e.g. cumulative equivalent minutes at 43°C — CEM43) for HIFU thermal ablation, or a cavitation/ROS-dose model for SDT or blood-brain-barrier opening, driven by actual transducer physics |
-| `AdaptiveController` | The paper's coordinate-to-dose control law, `P(t) = P_min + (P_max − P_min)·f(V(t)/V0)`, with power/focal limits set from your transducer's actual specs and safety margins defined by a clinician/regulatory framework — not values invented for the demo — and with MR-thermometry or cavitation-emission feedback retained as the final safety interlock beneath it |
-| 2D circle detection | For real 3D tracking you'll want either a 3D ultrasound probe or multi-plane 2D sweeps reconstructed into a volume, plus a physics-informed, zero-shot denoising step (as used for low-angle plane-wave compounding) to keep image quality usable at real-time frame rates — a distinct subsystem worth prototyping separately once this loop's control logic is validated |
- 
-<!--
-  ADDITIONAL FIGURE PLACEHOLDERS
-  Insert the paper's supporting diagrams here as needed, e.g.:
-  ![3D U-Net encoder/decoder architecture](docs/media/3d_unet.png)
-  ![Real-time zero-shot denoising pipeline for plane-wave compounding](docs/media/denoising_pipeline.png)
-  ![3D U-Net + XAI tracking workflow](docs/media/xai_tracking.png)
-  ![Model-based deep learning beamforming (ABLE) vs. classical and pure data-driven methods](docs/media/beamforming_comparison.png)
--->
+
+Programmed By: **Raneem Sa'deh🌚✨**
