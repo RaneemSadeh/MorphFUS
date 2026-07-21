@@ -1,12 +1,4 @@
-"""
-run_ultrasound_replay.py
--------------------------
-Replay a real ultrasound volume slice through the existing detection pipeline.
 
-This script loads a case from the uploaded pre-clinical ultrasound dataset,
-runs the current `detect_tumor()` function on a chosen slice, and saves an
-annotation overlay for inspection.
-"""
 
 import argparse
 import os
