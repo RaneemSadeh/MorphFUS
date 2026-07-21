@@ -1,23 +1,3 @@
-"""
-run_closed_loop.py
--------------------
-Ties detection.py + controller.py + tumor_sim.py into the actual
-closed-loop system:
-
-    while tumor not fully ablated:
-        frame = get_next_ultrasound_frame()
-        measurement = detect_tumor(frame)          # PERCEPTION
-        command = controller.compute_command(measurement)  # DECISION
-        apply command to patient (power, focal size)        # ACTUATION
-        log everything, advance time
-
-Run:  python3 run_closed_loop.py
-Outputs:
-  loop_log.csv                 -- full time series of the treatment session
-  closed_loop_summary.png      -- tumor size / power / focal size over time
-  frames/frame_XXXX.png        -- sample frames with detection overlay
-"""
-
 import os
 import csv
 import numpy as np
@@ -33,9 +13,7 @@ def draw_overlay(frame, measurement, command, t):
     vis = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     if measurement.found:
         cx, cy = int(measurement.center_px[0]), int(measurement.center_px[1])
-        # detected tumor boundary (green)
         cv2.circle(vis, (cx, cy), int(measurement.radius_px), (0, 220, 0), 1)
-        # commanded focal spot (red) -- what the "wave" is currently targeting
         focal_px = command.focal_radius_mm * patient.pixels_per_mm
         cv2.circle(vis, (cx, cy), int(max(focal_px, 1)), (0, 0, 255), 1)
     label = f"t={t:4.1f}s  r={measurement.radius_mm:5.2f}mm  P={command.power_watts:4.1f}W  conf={measurement.confidence:.2f}"
@@ -51,7 +29,6 @@ if __name__ == "__main__":
     limits = ControlLimits(max_power_watts=40.0, min_power_watts=2.0, stop_radius_mm=1.5)
     controller = AdaptiveController(limits=limits, initial_radius_mm=initial_radius)
 
-    dt = 0.5  # seconds per control cycle -- i.e. detector runs at 2 Hz
     max_time = 240.0
     t = 0.0
 
@@ -95,7 +72,6 @@ if __name__ == "__main__":
         writer.writeheader()
         writer.writerows(rows)
 
-    # --- summary plot ---
     ts = [r["t_s"] for r in rows]
     true_r = [r["true_radius_mm"] for r in rows]
     meas_r = [r["measured_radius_mm"] for r in rows]
