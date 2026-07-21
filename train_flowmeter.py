@@ -1,12 +1,3 @@
-"""
-train_flowmeter.py
-------------------
-Train a simple classifier on the flowmeter diagnostics dataset.
-
-This script demonstrates how to use the real uploaded flowmeter data, trains a
-model, and reports basic classification metrics.
-"""
-
 import argparse
 import os
 import pickle
@@ -58,8 +49,6 @@ def main():
     y_pred = pipeline.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-    print("Flowmeter fault classification")
-    print("-------------------------------")
     print(f"Training samples: {X_train.shape[0]}")
     print(f"Test samples: {X_test.shape[0]}")
     print(f"Accuracy: {accuracy:.4f}\n")
