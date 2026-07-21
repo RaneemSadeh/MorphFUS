@@ -1,12 +1,3 @@
-"""
-prepare_ultrasound_dataset.py
------------------------------
-Prepare and inspect the uploaded ultrasound volume dataset.
-
-This script shows how to load Analyze 7.5 volumes and segmentation masks from
-Data/02 and save representative 2D slices for further model development.
-"""
-
 import argparse
 import os
 from pathlib import Path
