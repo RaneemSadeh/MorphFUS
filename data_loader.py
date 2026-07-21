@@ -1,11 +1,3 @@
-"""
-data_loader.py
---------------
-Utilities for loading the uploaded real datasets so the prototype can be
-trained and evaluated on real flowmeter diagnostics and real ultrasound
-volume data.
-"""
-
 from __future__ import annotations
 
 import csv
@@ -73,7 +65,6 @@ def parse_analyze_header(hdr_path: str) -> Dict[str, Any]:
     if len(hdr) < 348:
         raise ValueError(f"Analyze header file is truncated: {hdr_path}")
 
-    # dim[0..7] is at byte 40, datatype at 70, bitpix at 72, and vox_offset at 108.
     dims = struct.unpack("<hhhhhhhhhhh", hdr[40:62])
     datatype = struct.unpack("<h", hdr[70:72])[0]
     bitpix = struct.unpack("<h", hdr[72:74])[0]
@@ -83,7 +74,7 @@ def parse_analyze_header(hdr_path: str) -> Dict[str, Any]:
         raise ValueError(f"Invalid Analyze header dimensions in {hdr_path}")
 
     shape = tuple(dims[1 : dims[0] + 1])
-    # Drop trailing singleton dimensions; Analyze can encode shape as e.g. (289, 648, 13, 1).
+    # Drop trailing singleton dimensions
     shape = tuple(dim for dim in shape if dim > 1)
     dtype = ANALYZE_DATATYPE_TO_DTYPE.get(datatype)
     if dtype is None:
