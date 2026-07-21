@@ -1,10 +1,3 @@
-"""
-train_ultrasound_segmentation.py
---------------------------------
-Train a baseline pixel-level ultrasound segmentation model using the uploaded
-pre-clinical liver tumor dataset.
-"""
-
 import argparse
 import os
 import pickle
