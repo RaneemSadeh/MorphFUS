@@ -1,9 +1,3 @@
-"""
-segmentation_model.py
----------------------
-Utilities for training and using a simple pixel-level segmentation model
-for the uploaded ultrasound dataset.
-"""
 
 from __future__ import annotations
 
