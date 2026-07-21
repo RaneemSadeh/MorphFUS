@@ -1,9 +1,3 @@
-"""
-train_ultrasound_unet.py
--------------------------
-Train a 2D U-Net on the uploaded ultrasound dataset.
-"""
-
 from __future__ import annotations
 
 import argparse
