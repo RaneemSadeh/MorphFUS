@@ -1,14 +1,3 @@
-"""
-run_closed_loop_on_dataset.py
------------------------------
-Replay real ultrasound dataset slices through the closed-loop detection +
-controller pipeline.
-
-This script demonstrates how the existing control logic behaves when real
-ultrasound image frames are provided as the input stream instead of synthetic
-frames from `tumor_sim.py`.
-"""
-
 import argparse
 import csv
 import os
